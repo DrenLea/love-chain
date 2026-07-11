@@ -631,6 +631,30 @@ textarea, input[type="text"] {
   border: 2.5px solid var(--line);
   border-radius: 14px;
 }
+/* AI 生成的海报配图 */
+.poster .ai-art {
+  position: relative;
+  margin: 10px auto 4px;
+  width: 100%;
+}
+.poster .ai-art img {
+  width: 100%;
+  border: 2.5px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 2px 2px 0 var(--line);
+  display: block;
+}
+.poster .ai-art .ai-badge {
+  position: absolute; top: -8px; right: -6px;
+  background: var(--accent-3);
+  color: #fff;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 10px;
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  transform: rotate(6deg);
+}
 .poster .stamp {
   position: absolute; right: 10px; bottom: 10px;
   width: 60px; height: 60px;
@@ -1248,20 +1272,25 @@ textarea, input[type="text"] {
   padding: 0 24px 40px;
 }
 .web-nav {
-  display: flex; align-items: center; gap: 16px;
-  padding: 18px 0;
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 0;
   border-bottom: 2px dashed rgba(58,47,42,0.2);
-  margin-bottom: 22px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  overflow-x: auto;
 }
+.web-nav::-webkit-scrollbar { display: none; }
 .web-nav .logo {
   font-family: 'ZCOOL KuaiLe', sans-serif;
-  font-size: 26px;
+  font-size: 24px;
   letter-spacing: 2px;
   display: flex; align-items: center; gap: 6px;
+  flex-shrink: 0;
 }
 .web-nav .links {
-  display: flex; gap: 6px; margin-left: 22px;
-  flex-wrap: wrap;
+  display: flex; gap: 6px;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
 }
 .web-nav .links a {
   padding: 6px 14px; border-radius: 999px;
@@ -1271,14 +1300,11 @@ textarea, input[type="text"] {
   text-decoration: none;
   font-family: 'ZCOOL KuaiLe', sans-serif; font-size: 13px;
   letter-spacing: 1px;
+  white-space: nowrap;
 }
 .web-nav .links a:hover { background: var(--accent-2); color: #fff; }
-.web-nav .right {
-  margin-left: auto;
-  display: flex; align-items: center; gap: 12px;
-}
-.web-nav .right .role-pill { padding: 6px 12px; }
 .web-nav .app-cta {
+  margin-left: auto;
   display: inline-flex; align-items: center; gap: 6px;
   padding: 8px 16px;
   border: 2.5px solid var(--line);
@@ -1290,6 +1316,38 @@ textarea, input[type="text"] {
   font-family: 'ZCOOL KuaiLe', sans-serif;
   letter-spacing: 1px;
   font-size: 14px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* 角色快切独立一行（web 版） */
+.web-role-bar {
+  background: transparent;
+  border-bottom: none;
+  padding: 12px 0 14px;
+  margin-bottom: 4px;
+}
+
+/* web 版：选中的任务卡片高亮 */
+.task-cardlet.selected {
+  background: linear-gradient(120deg, #fff2c4, #fff);
+  box-shadow: 0 0 0 3px var(--accent-2), 3px 3px 0 var(--line);
+}
+/* 右侧面板顶部的选中任务信息条 */
+.selected-task-card {
+  padding: 4px 2px 12px;
+  border-bottom: 2px dashed rgba(58,47,42,0.15);
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+.selected-task-card .tag {
+  display: inline-block;
+  padding: 1px 10px;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 11px;
+  border: 1.5px solid var(--line);
+  font-family: 'ZCOOL KuaiLe', sans-serif;
 }
 
 .web-grid {

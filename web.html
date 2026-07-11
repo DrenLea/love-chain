@@ -16,19 +16,19 @@
     <button class="close" id="uaClose" title="关闭">✕</button>
   </div>
   <div class="web-shell">
-    <!-- 顶部导航 -->
+    <!-- 顶部导航：单行 logo + 链接 + App 按钮 -->
     <nav class="web-nav">
-      <span class="logo">❤️ 爱心链 LoveChain</span>
+      <span class="logo">❤️ 爱心链</span>
       <div class="links">
         <a href="web.html">🗺️ 任务地图</a>
         <a href="screen.html?view=web">🎪 拼图大屏</a>
         <a href="story.html?view=web">🎬 暖心故事</a>
       </div>
-      <div class="right">
-        <div class="role-pill-bar" id="rolePillBar" style="border:none; padding:0;"></div>
-        <a class="app-cta" href="app.html">📱 打开手机版 App</a>
-      </div>
+      <a class="app-cta" href="app.html">📱 手机版</a>
     </nav>
+
+    <!-- 角色快切：独立一行，窄屏可横向滚动 -->
+    <div class="role-pill-bar web-role-bar" id="rolePillBar"></div>
 
     <!-- 顶部进度条 -->
     <div class="mini-hud" id="hud" style="border-radius: 12px; border: 2px solid var(--line); margin-bottom: 16px;">
@@ -63,28 +63,32 @@
         </div>
       </div>
 
-      <!-- 右：主任务生命周期 + 众评直播 -->
+      <!-- 右：选中任务的生命周期 + 众评直播 -->
       <div class="col-right">
         <div class="panel">
-          <h3>📖 主任务 · 7 步爱心链 <span class="badge" id="lifeCount">0/7</span></h3>
+          <h3>📖 <span id="lifeTitle">主任务 · 7 步爱心链</span> <span class="badge" id="lifeCount">0/7</span></h3>
+          <div class="selected-task-card" id="selectedTaskCard"></div>
           <div class="lifecycle-list" id="lifecycleList"></div>
+          <a class="btn btn-primary" id="enterTaskBtn" href="action.html?role=donor&view=web" style="margin-top:12px;">
+            ▶️ 进入这个任务的操作台
+          </a>
         </div>
 
         <div class="panel" style="margin-top: 22px;">
           <h3>📣 爱心众评 · 实时评分 <span class="badge" id="reviewCount">0/30</span></h3>
           <div class="live-reviews" id="liveReviews">
-            <div class="empty">还没有评审员到场，去 <a href="action.html?role=judge">爱心评审台</a> 一键召集吧 ✨</div>
+            <div class="empty">还没有评审员到场，去 <a href="action.html?role=judge&view=web">爱心评审台</a> 一键召集吧 ✨</div>
           </div>
         </div>
 
         <div class="panel" style="margin-top: 22px; text-align: center;">
           <h3 style="justify-content: center;">🎯 演示快捷入口</h3>
           <div style="display: grid; gap: 8px;">
-            <a class="btn btn-primary" href="action.html?role=donor&view=web">🎁 发起爱心（1 步：写寄语）</a>
-            <a class="btn btn-warm" href="action.html?role=judge&view=web">⚖️ 爱心评审（召集 30 人众评）</a>
-            <a class="btn btn-secondary" href="action.html?role=carrier&view=web">🚚 加入接力（2 程打卡）</a>
-            <a class="btn btn-secondary" href="action.html?role=receiver&view=web">🏫 接收爱心（拍开箱）</a>
-            <a class="btn btn-secondary" href="screen.html?view=web">🎪 打开拼图大屏</a>
+            <a class="btn btn-primary quick-link" data-role="donor" href="action.html?role=donor&view=web">🎁 发起爱心（1 步：写寄语）</a>
+            <a class="btn btn-warm quick-link" data-role="judge" href="action.html?role=judge&view=web">⚖️ 爱心评审（召集 30 人众评）</a>
+            <a class="btn btn-secondary quick-link" data-role="carrier" href="action.html?role=carrier&view=web">🚚 加入接力（2 程打卡）</a>
+            <a class="btn btn-secondary quick-link" data-role="receiver" href="action.html?role=receiver&view=web">🏫 接收爱心（拍开箱）</a>
+            <a class="btn btn-secondary" id="screenQuickLink" href="screen.html?view=web">🎪 打开拼图大屏</a>
           </div>
         </div>
       </div>
@@ -112,7 +116,69 @@
   <script src="js/state.js"></script>
   <script src="js/board.js"></script>
   <script>
-    // 网页版专有：右侧生命周期时间线
+    /* ---------- 选中任务：右侧面板跟随 ---------- */
+    let selectedTaskId = 'T1';
+
+    function selectTask(taskId) {
+      selectedTaskId = taskId;
+      ChainState.use(taskId);
+      Reviews.use(taskId);
+      LoveBoard.renderLifecycle();
+      LoveBoard.renderLiveReviews();
+      LoveBoard.renderHud();
+      highlightSelectedCard();
+      updateTaskLinks();
+    }
+
+    // web 版点任务 = 选中并联动右侧，不直接跳页（跳转交给"进入操作台"按钮）
+    LoveBoard.openTaskDetail = function (t) {
+      selectTask(t.id);
+      // 右侧面板滚进视野（小屏幕下有用）
+      const panel = document.getElementById('selectedTaskCard');
+      if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    };
+
+    function roleForTask(t) {
+      if (!t) return 'donor';
+      if (t.type === 'need') return 'receiver';
+      if (t.type === 'carry') return 'carrier';
+      return 'donor';
+    }
+
+    /** 所有"进入任务"类链接都带上当前选中任务 */
+    function updateTaskLinks() {
+      const t = findTaskById(selectedTaskId);
+      const enterBtn = document.getElementById('enterTaskBtn');
+      enterBtn.setAttribute('href', `action.html?role=${roleForTask(t)}&task=${selectedTaskId}&view=web`);
+      document.querySelectorAll('.quick-link').forEach((a) => {
+        a.setAttribute('href', `action.html?role=${a.dataset.role}&task=${selectedTaskId}&view=web`);
+      });
+      document.getElementById('screenQuickLink')
+        .setAttribute('href', `screen.html?task=${selectedTaskId}&view=web`);
+    }
+
+    /** 右上角选中任务信息卡 */
+    function highlightSelectedCard() {
+      const t = findTaskById(selectedTaskId);
+      const el = document.getElementById('selectedTaskCard');
+      if (!t || !el) return;
+      const key = t.urgent ? 'urgent' : t.type;
+      const meta = TASK_TYPE_META[key] || TASK_TYPE_META.donation;
+      document.getElementById('lifeTitle').textContent = `${t.title}`;
+      el.innerHTML = `
+        <span class="tag" style="background:${meta.color}">${meta.emoji} ${meta.label}</span>
+        <span class="muted" style="margin-left:6px;">👤 ${t.actor || '匿名'} · ${t.desc || ''}</span>
+      `;
+      // 左侧列表高亮选中的卡片
+      document.querySelectorAll('.task-cardlet').forEach((card) => card.classList.remove('selected'));
+      const cards = document.querySelectorAll('.task-cardlet');
+      const list = LoveBoard.allTasks().filter((x) => LoveBoard.state.filter === 'all' || x.type === LoveBoard.state.filter);
+      list.forEach((x, i) => {
+        if (x.id === selectedTaskId && cards[i]) cards[i].classList.add('selected');
+      });
+    }
+
+    /* ---------- 网页版专有：右侧生命周期时间线（跟随选中任务） ---------- */
     LoveBoard.renderLifecycle = function () {
       const el = document.getElementById('lifecycleList');
       if (!el) return;
@@ -133,16 +199,17 @@
           </div>
         `;
       }).join('');
+      highlightSelectedCard();
     };
 
-    // 网页版专有：众评实时直播
+    // 网页版专有：众评实时直播（跟随选中任务）
     LoveBoard.renderLiveReviews = function () {
       const el = document.getElementById('liveReviews');
       if (!el) return;
       const list = Reviews.all();
       document.getElementById('reviewCount').textContent = `${list.length}/30`;
       if (!list.length) {
-        el.innerHTML = `<div class="empty">还没有评审员到场，去 <a href="action.html?role=judge">爱心评审台</a> 一键召集吧 ✨</div>`;
+        el.innerHTML = `<div class="empty">这个任务还没有评审员到场，<a href="action.html?role=judge&task=${selectedTaskId}&view=web">去召集 30 位众评</a> ✨</div>`;
         return;
       }
       const avg = list.reduce((s, r) => s + r.stars, 0) / list.length;
@@ -167,6 +234,7 @@
     };
 
     LoveBoard.init({ scope: 'web' });
+    selectTask('T1');
 
     // UA 分流：若是自动路过来的，顶部亮出小提示；也允许用户手动切
     (function () {
