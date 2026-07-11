@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>爱心链 LoveChain · Demo 演说稿</title>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#fff6ea; --paper-2:#ffeed8;
+    --ink:#3a2f2a; --ink-muted:#8a7566; --line:#3a2f2a;
+    --accent-1:#ff8a7b; --accent-2:#f9b942; --accent-3:#4fc3f7;
+    --accent-4:#f06292; --accent-5:#8fd19e;
+    --shadow-doodle:4px 4px 0 rgba(58,47,42,.85);
+    --shadow-soft:0 6px 18px rgba(58,47,42,.10);
+    --radius:20px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    font-family:'ZCOOL XiaoWei','PingFang SC','Microsoft YaHei',sans-serif;
+    color:var(--ink); background:var(--paper); overflow:hidden;
+    background-image:
+      radial-gradient(rgba(58,47,42,.06) 1px, transparent 1px),
+      radial-gradient(rgba(58,47,42,.04) 1px, transparent 1px);
+    background-size:22px 22px,44px 44px; background-position:0 0,11px 11px;
+    line-height:1.55;
+  }
+  .stage{position:relative;width:100vw;height:100vh;}
+  .slide{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    padding:5vh 7vw 11vh;
+    opacity:0; visibility:hidden; transform:translateY(22px);
+    transition:opacity .5s ease, transform .5s ease, visibility .5s;
+  }
+  .slide.active{opacity:1;visibility:visible;transform:translateY(0);z-index:2;}
+
+  .kicker{
+    font-family:'ZCOOL KuaiLe',sans-serif; display:inline-block;
+    background:var(--accent-2); color:var(--ink);
+    border:2.5px solid var(--line); border-radius:999px;
+    padding:.3rem 1.2rem; box-shadow:var(--shadow-doodle);
+    letter-spacing:.25em; font-size:.9rem; margin-bottom:1.4rem;
+    transform:rotate(-1.5deg);
+  }
+  h1{
+    font-family:'ZCOOL KuaiLe',sans-serif;
+    font-size:clamp(2.8rem,6.5vw,5rem); letter-spacing:.06em; text-align:center;
+    text-shadow:4px 4px 0 rgba(58,47,42,.15);
+  }
+  h1 .c1{color:var(--accent-1);} h1 .c2{color:var(--accent-2);}
+  h1 .c3{color:var(--accent-3);} h1 .c4{color:var(--accent-4);}
+  h2{
+    font-family:'ZCOOL KuaiLe',sans-serif;
+    font-size:clamp(1.7rem,3.4vw,2.6rem); margin-bottom:.5rem; text-align:center;
+  }
+  h2 .hl{
+    color:var(--accent-1);
+    background:linear-gradient(transparent 62%, rgba(249,185,66,.55) 62%);
+    padding:0 .15em;
+  }
+  .sub{color:var(--ink-muted); font-size:clamp(.95rem,1.5vw,1.15rem); text-align:center; margin-bottom:2.2rem; max-width:62ch;}
+
+  .grid{display:grid; gap:1.2rem; width:min(1100px,100%);}
+  .g2{grid-template-columns:repeat(2,1fr);}
+  .g3{grid-template-columns:repeat(3,1fr);}
+  .g4{grid-template-columns:repeat(4,1fr);}
+  .g5{grid-template-columns:repeat(5,1fr);}
+
+  .card{
+    background:var(--paper-2);
+    border:2.5px solid var(--line); border-radius:var(--radius);
+    padding:1.4rem 1.3rem; box-shadow:var(--shadow-doodle);
+    transition:transform .22s ease; position:relative;
+  }
+  .card:nth-child(odd){transform:rotate(-.6deg);}
+  .card:nth-child(even){transform:rotate(.6deg);}
+  .card:hover{transform:rotate(0) translateY(-5px);}
+  .card .icon{font-size:2rem; display:block; margin-bottom:.6rem;}
+  .card h3{font-family:'ZCOOL KuaiLe',sans-serif; font-size:1.15rem; margin-bottom:.5rem;}
+  .card p{color:var(--ink-muted); font-size:.92rem; line-height:1.8;}
+  .card p b{color:var(--ink);}
+  .card .quote{
+    color:var(--ink); font-size:1.05rem; font-family:'ZCOOL KuaiLe',sans-serif;
+    margin-bottom:.5rem; line-height:1.6;
+  }
+  /* 胶带装饰 */
+  .tape{
+    position:absolute; top:-12px; left:50%; transform:translateX(-50%) rotate(-3deg);
+    width:86px; height:22px; background:rgba(249,185,66,.65);
+    border:1.5px dashed rgba(58,47,42,.35); border-radius:3px;
+  }
+  .tint1{background:#ffe3dd;} .tint2{background:#fdeecb;}
+  .tint3{background:#dcf1fd;} .tint4{background:#fde0eb;} .tint5{background:#e2f3e6;}
+
+  /* 流程步骤 */
+  .flow{display:flex; align-items:stretch; gap:.5rem; width:min(1180px,100%); flex-wrap:wrap; justify-content:center;}
+  .flow .step{flex:1 1 130px; min-width:128px;}
+  .flow .arrow{align-self:center; font-size:1.5rem; flex:0 0 auto; color:var(--accent-1);}
+  .badge{
+    display:inline-block; font-family:'ZCOOL KuaiLe',sans-serif;
+    background:var(--ink); color:var(--paper);
+    border-radius:8px; padding:.05rem .55rem; font-size:.82rem; margin-bottom:.55rem;
+  }
+
+  .tags{display:flex; gap:.7rem; flex-wrap:wrap; justify-content:center; margin-top:1.8rem;}
+  .tag{
+    border:2px solid var(--line); border-radius:999px; padding:.4rem 1.1rem;
+    font-size:.92rem; background:var(--paper-2); box-shadow:2.5px 2.5px 0 rgba(58,47,42,.7);
+    font-family:'ZCOOL KuaiLe',sans-serif;
+  }
+
+  .cta{
+    margin-top:2.4rem; font-family:'ZCOOL KuaiLe',sans-serif;
+    font-size:1.2rem; color:var(--ink);
+    background:var(--accent-2); border:2.5px solid var(--line);
+    padding:.8rem 2.6rem; border-radius:999px; box-shadow:var(--shadow-doodle);
+    transform:rotate(-1deg);
+  }
+
+  /* 封面漂浮 emoji */
+  .float{position:absolute; font-size:1.8rem; animation:bob 3.5s infinite ease-in-out; opacity:.85;}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-4deg);}50%{transform:translateY(-14px) rotate(5deg);}}
+
+  /* 底部控制条 */
+  .hud{
+    position:fixed; left:0; right:0; bottom:0; z-index:10;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:.6rem 1.4rem; background:rgba(255,246,234,.92); backdrop-filter:blur(6px);
+    border-top:2.5px solid var(--line); font-size:.85rem; color:var(--ink-muted);
+  }
+  .hud button{
+    background:var(--paper-2); border:2px solid var(--line); color:var(--ink);
+    border-radius:10px; padding:.3rem .9rem; cursor:pointer; font-size:.85rem; margin-left:.5rem;
+    font-family:inherit; box-shadow:2px 2px 0 rgba(58,47,42,.7);
+  }
+  .hud button:active{transform:translate(2px,2px); box-shadow:none;}
+  .progress{position:fixed; top:0; left:0; height:5px; z-index:11;
+    background:repeating-linear-gradient(90deg,var(--accent-1) 0 18px,var(--accent-2) 18px 36px);
+    border-bottom:1.5px solid var(--line); transition:width .4s ease;}
+
+  /* 演讲者备注 */
+  .notes{
+    position:fixed; right:1.2rem; bottom:3.8rem; width:min(430px,90vw); max-height:48vh; overflow:auto;
+    background:var(--paper); border:2.5px solid var(--line); border-radius:16px;
+    padding:1.1rem 1.2rem; z-index:9; box-shadow:var(--shadow-doodle);
+    display:none;
+  }
+  .notes.show{display:block;}
+  .notes h4{font-family:'ZCOOL KuaiLe',sans-serif; color:var(--accent-1); font-size:.95rem; margin-bottom:.6rem;}
+  .notes p{font-size:.93rem; line-height:1.9; color:var(--ink);}
+  kbd{border:1.5px solid var(--line); border-radius:4px; padding:0 .35rem; font-size:.78rem; background:var(--paper-2);}
+  @media (max-width:860px){
+    .g2,.g3,.g4,.g5{grid-template-columns:1fr;}
+    .flow{flex-direction:column;}
+    .flow .arrow{transform:rotate(90deg);}
+    .slide{overflow-y:auto; justify-content:flex-start; padding-top:8vh;}
+  }
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="stage" id="stage">
+
+  <!-- 1 封面 -->
+  <section class="slide" data-notes="各位评委、各位朋友，大家好。开始之前想请大家回想一下：你上一次帮助陌生人是什么时候？也许是把闲置的童装打包好却不知道寄给谁，也许是顺路想捎带点什么却没有机会。这些善意很小、很安静，小到常常没有人看见，也没有人接住。今天我们带来的作品，就是想把这些散落的善意串起来——它叫「爱心链 LoveChain」：一次爱心捐赠，像游戏接力一样，经过发起、众评、接力、签收、盖章，一格一格被点亮。">
+    <span class="float" style="top:14%;left:12%;">🎁</span>
+    <span class="float" style="top:22%;right:14%;animation-delay:.8s;">🚚</span>
+    <span class="float" style="bottom:24%;left:18%;animation-delay:1.6s;">💌</span>
+    <span class="float" style="bottom:20%;right:20%;animation-delay:2.2s;">✨</span>
+    <div class="kicker">Demo · 项目路演</div>
+    <h1><span class="c1">爱</span><span class="c2">心</span><span class="c3">链</span> · LoveChain</h1>
+    <p class="sub" style="margin-top:1.4rem;font-size:1.2rem;">让每一次善意，像游戏接力一样被点亮 🔗</p>
+    <div class="tags">
+      <span class="tag">🎁 人人可发起</span>
+      <span class="tag">⚖️ 件件有众评</span>
+      <span class="tag">🚚 程程可追溯</span>
+      <span class="tag">🎪 格格被看见</span>
+    </div>
+  </section>
+
+  <!-- 2 痛点 -->
+  <section class="slide" data-notes="为什么要做这个项目？因为在真实生活里，善意面临四道门槛。第一，「我想帮忙，但不知道从何开始」——公益的门槛看起来太高：身边谁需要帮助？想捐书捐衣物，渠道在哪里？普通人往往有心无门。第二，「我的帮助真的到了吗」——捐出去之后石沉大海，物资去向不透明，你无法确认那份善意是否真正送达。第三，微小的善举无人记录：把闲置童装送出去、顺路帮忙捎带一程，这些微光发生了，却像没发生过一样，无人知晓。第四，善意难以传播——传统公益缺乏互动和正向反馈，一次善举很难鼓舞自己、更难激励他人变成更多的行动。面对这些被遗忘的善意，你是否也有同样的疑问？这就是爱心链要回答的问题。">
+    <div class="kicker">01 · 痛点</div>
+    <h2>每一个想伸出援手的人，<span class="hl">都值得被回应</span></h2>
+    <p class="sub">面对那些被遗忘的善意，你是否也有同样的疑问？</p>
+    <div class="grid g2">
+      <div class="card tint1">
+        <span class="icon">🙋</span>
+        <p class="quote">“我想帮忙，但不知道从何开始”</p>
+        <p>公益门槛太高？不知道谁需要帮助？想捐书捐衣物却找不到渠道？</p>
+      </div>
+      <div class="card tint3">
+        <span class="icon">📦</span>
+        <p class="quote">“我的帮助，真的到了吗？”</p>
+        <p>捐赠后石沉大海？物资去向不透明？无法确认善意是否真正送达？</p>
+      </div>
+      <div class="card tint2">
+        <span class="icon">✨</span>
+        <p class="quote">“每一份微小的善举，都值得被记录”</p>
+        <p>3 件闲置童装、顺路捎带一程、一次邻里帮忙——这些微光可能无人知晓。</p>
+      </div>
+      <div class="card tint4">
+        <span class="icon">🔗</span>
+        <p class="quote">“如何能让善意传播？”</p>
+        <p>传统公益缺乏互动与激励，一次善举难以鼓舞自己、感染他人，变成更多的行动。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 产品是什么 -->
+  <section class="slide" data-notes="我们的答案是「爱心链」——一个把公益游戏化的爱心接力平台。核心理念一句话：把一次捐赠拆成一条链，让每个人都能在链上找到自己的位置。你可以是发起爱心的人，发布闲置或求助需求；可以是加入接力的人，路过顺手带一程；可以是接收爱心的人，签收远方来的心意；可以是爱心评审，和 30 位随机评审员一起为任务把关；哪怕什么都不做，你也可以围观大屏，看着爱心链的拼图一格一格亮起来。五种角色，没有门槛——这直接回应了第一个痛点：想帮忙的人，总有一个入口。">
+    <div class="kicker">02 · 产品介绍</div>
+    <h2>什么是<span class="hl">「爱心链」</span>？</h2>
+    <p class="sub">一个把公益游戏化的爱心接力平台 —— 把一次捐赠拆成一条链，每个人都能找到自己的位置</p>
+    <div class="grid g5">
+      <div class="card tint1" style="text-align:center;">
+        <span class="icon">🎁</span><h3>发起爱心</h3>
+        <p>发布你的闲置或需求，写一句心意</p>
+      </div>
+      <div class="card tint2" style="text-align:center;">
+        <span class="icon">⚖️</span><h3>爱心评审</h3>
+        <p>召集 30 位随机评审员众评打分</p>
+      </div>
+      <div class="card tint3" style="text-align:center;">
+        <span class="icon">🚚</span><h3>加入接力</h3>
+        <p>路过顺手带一程，打卡拍照送物资</p>
+      </div>
+      <div class="card tint4" style="text-align:center;">
+        <span class="icon">🏫</span><h3>接收爱心</h3>
+        <p>签收心意，拍下开箱瞬间</p>
+      </div>
+      <div class="card tint5" style="text-align:center;">
+        <span class="icon">🎪</span><h3>围观大屏</h3>
+        <p>看拼图一格格亮起</p>
+      </div>
+    </div>
+    <div class="tags">
+      <span class="tag">人人可参与 · 没有门槛</span>
+      <span class="tag">五种角色 · 总有一个属于你</span>
+    </div>
+  </section>
+
+  <!-- 4 特色一：爱心地图 -->
+  <section class="slide" data-notes="下面介绍四大产品特色。特色一：手绘游戏爱心地图。打开爱心链，映入眼帘的不是冷冰冰的列表，而是一张手绘风格的游戏地图——草坪、沙滩、樱花、湖泊之间，散落着一个个爱心任务点：小林发布的 3 件童装待接力、希望小学急需棉衣、张师傅的顺风车途经北四环、云溪小学缺文具……需求、捐赠、顺风接力、已点亮的爱心链，用不同颜色的图钉标在地图上，一目了然。想帮忙的人不再需要「寻找公益」——善意的机会就在地图上、就在身边。这回应了第一个痛点：从「不知道从何开始」，变成「点开地图就能开始」。">
+    <div class="kicker">03 · 产品特色 ①</div>
+    <h2>手绘爱心地图 · <span class="hl">善意就在身边</span></h2>
+    <p class="sub">游戏化的手绘地图，附近的需求、捐赠、顺风接力一目了然</p>
+    <div class="grid g2" style="align-items:stretch;">
+      <div class="card tint2" style="display:flex;flex-direction:column;justify-content:center;text-align:center;">
+        <div class="tape"></div>
+        <span class="icon" style="font-size:2.8rem;">🗺️</span>
+        <h3 style="font-size:1.35rem;">游戏地图 · 任务图钉</h3>
+        <p style="margin-top:.5rem;">草坪 · 沙滩 · 樱花 · 湖泊<br>每一枚图钉，都是一份等待被接住的善意</p>
+      </div>
+      <div class="grid g2" style="gap:.9rem;">
+        <div class="card tint1"><span class="icon">🎁</span><h3>闲置捐赠</h3><p>“3 件童装 · 待接力” —— 把家里的闲置送给需要的人</p></div>
+        <div class="card tint4"><span class="icon">🙏</span><h3>需求求助</h3><p>“希望小学 · 急需棉衣” —— 发布身边的求助需求</p></div>
+        <div class="card tint3"><span class="icon">🚚</span><h3>顺风接力</h3><p>“张师傅顺风车 · 途经北四环” —— 路过顺手带一程</p></div>
+        <div class="card tint5"><span class="icon">✨</span><h3>已点亮</h3><p>“爱心链已点亮 · 48h 前完成” —— 过往善意留在地图上</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 特色二：7 步生命周期 -->
+  <section class="slide" data-notes="特色二：七步生命周期，全程可追溯。这是回应「我的帮助真的到了吗」的核心设计。一条爱心链从头到尾七步：第一步，小林发布一份闲置捐赠，写一句给远方的寄语；第二步，系统智能配对，把捐赠和需求方匹配起来；第三步，众评审核通过——这个下一页细讲；第四、五步，接力开始：张师傅的顺风车带第一程，李阿姨拼车带第二程，每一程都要扫码打卡、拍照留证，物资到了哪个中转点，链上清清楚楚；第六步，希望小学签收，拍下开箱瞬间，写一句感谢；第七步，评审官核实所有环节后，为整条爱心链盖章认证，颁发爱心勋章。每一步都有人、有照片、有记录——捐赠不再石沉大海，每一次送达都有回音。">
+    <div class="kicker">04 · 产品特色 ②</div>
+    <h2>7 步生命周期 · <span class="hl">全程可追溯</span></h2>
+    <p class="sub">每一步都有人、有照片、有记录 —— 每一次送达都有回音</p>
+    <div class="flow">
+      <div class="card step tint1"><span class="badge">01</span><h3>💌 发布爱心</h3><p>小林发布闲置捐赠，写下寄语</p></div>
+      <div class="arrow">→</div>
+      <div class="card step tint2"><span class="badge">02</span><h3>💞 智能配对</h3><p>系统匹配接收方</p></div>
+      <div class="arrow">→</div>
+      <div class="card step tint2"><span class="badge">03</span><h3>📝 众评审核</h3><p>30 人评审团打分放行</p></div>
+      <div class="arrow">→</div>
+      <div class="card step tint3"><span class="badge">04-05</span><h3>🚚 两程接力</h3><p>张师傅、李阿姨扫码打卡拍照中转</p></div>
+      <div class="arrow">→</div>
+      <div class="card step tint4"><span class="badge">06</span><h3>🎁 签收开箱</h3><p>希望小学拍下开箱瞬间</p></div>
+      <div class="arrow">→</div>
+      <div class="card step tint2"><span class="badge">07</span><h3>✨ 盖章认证</h3><p>核实全链，颁发爱心勋章</p></div>
+    </div>
+    <div class="tags">
+      <span class="tag">📷 每程打卡拍照</span>
+      <span class="tag">🔍 全流程公开透明</span>
+      <span class="tag">🏅 盖章认证 · 爱心勋章</span>
+    </div>
+  </section>
+
+  <!-- 6 特色三：30 人众评 -->
+  <section class="slide" data-notes="特色三：30 人众评机制，用大家的眼睛建立信任。传统公益的信任靠机构背书，我们的信任靠社区共识。任何一条爱心链在进入接力之前，都要经过众评审核：系统从评审员池里随机召集 30 位普通用户——小豆丁、暖阳、木木、棉花糖……每人独立打分 4 到 5 星，留下一句短评：「资料齐全，靠谱！」「双方信息核对无误，可以放行」「接收方资质截图清晰」。30 个人的平均分达标，任务自动放行。随机抽取保证了不能刷分、不能串通；30 个独立视角，比一个审核员更难被骗。这就是我们不靠任何机构背书，也能让「件件可信」的答案——而且评审本身也是一种参与，动动手指打个分，你就已经在链上出了一份力。">
+    <div class="kicker">05 · 产品特色 ③</div>
+    <h2>30 人众评 · <span class="hl">用大家的眼睛建立信任</span></h2>
+    <p class="sub">随机召集 30 位评审员独立打分，社区共识代替机构背书</p>
+    <div class="grid g3">
+      <div class="card tint2">
+        <span class="icon">🎲</span>
+        <h3>随机召集</h3>
+        <p>一键从评审员池随机抽取 30 位普通用户，无法预知、无法串通、无法刷分。</p>
+      </div>
+      <div class="card tint3">
+        <span class="icon">⭐</span>
+        <h3>独立打分</h3>
+        <p>每人独立给出 4~5 星和一句短评：<b>“资料齐全，靠谱！”“双方信息核对无误，可以放行”</b>，汇总平均分达标即自动通过。</p>
+      </div>
+      <div class="card tint5">
+        <span class="icon">🤝</span>
+        <h3>评审即参与</h3>
+        <p>动动手指打个分，你就已经在这条爱心链上出了一份力——审核本身也是一次善意的参与。</p>
+      </div>
+    </div>
+    <div class="tags">
+      <span class="tag">🐣 小豆丁</span><span class="tag">🌞 暖阳</span><span class="tag">🌳 木木</span>
+      <span class="tag">🍡 棉花糖</span><span class="tag">☁️ 云朵</span><span class="tag">🐰 兔兔</span>
+      <span class="tag">… 共 30 位评审员</span>
+    </div>
+  </section>
+
+  <!-- 7 特色四：大屏 + 海报 -->
+  <section class="slide" data-notes="特色四：让善意被看见、被传播。这是回应「善举无人知晓」和「善意如何传播」两个痛点的设计。第一，拼图大屏：一块 3×3 的拼图大屏跟随所有人的操作实时点亮——小林发布了，亮一格；众评通过了，亮一格；张师傅打卡了，再亮一格。围观的人什么都不用做，也能看到一条爱心链正在一格一格走向完成，善意第一次有了「现场感」。第二，手绘分享海报：整条链完成后，自动生成一张手绘风格的暖心故事海报，附带二维码，扫码就能看到这条链的完整故事——谁发起、谁接力、孩子们开箱的瞬间。发到朋友圈，一条链的故事就可能点燃下一条链。这就是我们的传播飞轮：完成 → 海报 → 分享 → 新的发起。">
+    <div class="kicker">06 · 产品特色 ④</div>
+    <h2>拼图大屏 + 分享海报 · <span class="hl">让善意被看见、被传播</span></h2>
+    <p class="sub">围观也是参与，分享就是传播 —— 一条链的故事，点燃下一条链</p>
+    <div class="grid g2">
+      <div class="card tint5">
+        <div class="tape"></div>
+        <span class="icon">🎪</span>
+        <h3>3×3 拼图大屏 · 实时点亮</h3>
+        <p>大屏跟随所有人的操作实时亮起：发布亮一格、众评亮一格、打卡再亮一格……围观的人什么都不用做，也能看见一条爱心链正一格一格走向完成。<b>善意，第一次有了「现场感」。</b></p>
+      </div>
+      <div class="card tint1">
+        <div class="tape"></div>
+        <span class="icon">🖼️</span>
+        <h3>手绘暖心海报 · 扫码看故事</h3>
+        <p>整条链完成后自动生成手绘分享海报，附带二维码——扫码就能重温这条链的完整故事：谁发起、谁接力、开箱的瞬间。<b>发到朋友圈，就可能点燃下一条爱心链。</b></p>
+      </div>
+    </div>
+    <div class="tags">
+      <span class="tag">完成 ✦</span><span class="tag">→ 生成海报</span><span class="tag">→ 朋友圈分享</span><span class="tag">→ 新的发起 🔁</span>
+    </div>
+  </section>
+
+  <!-- 8 原型演示 -->
+  <section class="slide" data-notes="下面进入现场演示环节（切换到产品）。爱心链是纯前端作品，浏览器打开即用，还支持 PWA 安装到手机桌面。演示动线五步：第一步，打开首页，网页版和手机版自动分流——我用桌面看板，请评委扫码用手机版，我们同时操作。第二步，在手绘地图上以「小林」的身份发起一份童装捐赠。第三步，一键召集 30 人众评，大家可以在右侧看到评分实时刷进来，平均分达标自动放行。第四步，切换到张师傅的角色操作台，接力打卡拍照，再切到希望小学签收开箱——注意看大屏，拼图正在一格一格亮起，多端实时同步。第五步，整条链盖章认证，撒花，自动生成手绘海报，现场扫码就能看到这条刚刚诞生的暖心故事。全程不到三分钟，一条完整的爱心链就在大家眼前点亮了。">
+    <div class="kicker">07 · 原型演示</div>
+    <h2>现场走完<span class="hl">一条完整的爱心链</span></h2>
+    <p class="sub">纯前端 · 浏览器打开即用 · PWA 可装进手机 · 多端实时同步</p>
+    <div class="grid g5">
+      <div class="card tint2" style="text-align:center;"><span class="badge">Step 1</span><span class="icon">📱</span><h3>双端入口</h3><p>桌面看板 + 手机 App 自动分流，评委扫码同步操作</p></div>
+      <div class="card tint1" style="text-align:center;"><span class="badge">Step 2</span><span class="icon">🎁</span><h3>地图发起</h3><p>以小林身份发布一份童装捐赠</p></div>
+      <div class="card tint3" style="text-align:center;"><span class="badge">Step 3</span><span class="icon">⚖️</span><h3>众评直播</h3><p>30 人评分实时刷入，达标自动放行</p></div>
+      <div class="card tint4" style="text-align:center;"><span class="badge">Step 4</span><span class="icon">🚚</span><h3>接力签收</h3><p>打卡→签收开箱，大屏拼图逐格点亮</p></div>
+      <div class="card tint5" style="text-align:center;"><span class="badge">Step 5</span><span class="icon">🎉</span><h3>盖章撒花</h3><p>认证完成，生成海报，扫码看暖心故事</p></div>
+    </div>
+  </section>
+
+  <!-- 9 愿景收尾 -->
+  <section class="slide" data-notes="最后，回到我们的初心。爱心链相信三件事：第一，人人可为——公益不必宏大，发一件闲置、顺路带一程、甚至只是打一个分，你就在链上；第二，件件可查——七步生命周期加 30 人众评，每一份善意都有据可查、有照可看、有章可盖；第三，处处有光——当地图上「已点亮」的图钉越来越多，当一张张海报在朋友圈传开，善意就不再是孤立的瞬间，而是一张彼此相连的网络。一个人的善举是一格拼图，一群人的接力就是一整幅点亮的画。加入我们，接过属于你的那一棒。谢谢大家！">
+    <span class="float" style="top:16%;left:14%;">💡</span>
+    <span class="float" style="top:20%;right:12%;animation-delay:1s;">🌟</span>
+    <span class="float" style="bottom:22%;left:20%;animation-delay:1.8s;">🧩</span>
+    <div class="kicker">08 · 愿景</div>
+    <h2>“一格拼图是善举，<span class="hl">一条链是星河</span>”</h2>
+    <p class="sub">让每一份微小善意都能被看见、被传递、被记录</p>
+    <div class="grid g3">
+      <div class="card tint1" style="text-align:center;">
+        <span class="icon">🙌</span><h3>人人可为</h3>
+        <p>发一件闲置、带一程物资、打一个分<br>——你就已经在链上</p>
+      </div>
+      <div class="card tint3" style="text-align:center;">
+        <span class="icon">🔍</span><h3>件件可查</h3>
+        <p>7 步生命周期 + 30 人众评<br>每份善意有据可查、有照可看</p>
+      </div>
+      <div class="card tint5" style="text-align:center;">
+        <span class="icon">💡</span><h3>处处有光</h3>
+        <p>地图图钉相连成网<br>海报传开，点燃下一条链</p>
+      </div>
+    </div>
+    <div class="cta">加入爱心链，接过属于你的那一棒 🔗✨</div>
+  </section>
+
+</div>
+
+<!-- 演讲者备注面板 -->
+<aside class="notes" id="notes">
+  <h4>🎤 演讲词</h4>
+  <p id="notesText"></p>
+</aside>
+
+<div class="hud">
+  <span id="pageInfo">1 / 9</span>
+  <span>← → / 空格 翻页 · <kbd>N</kbd> 演讲词 · <kbd>Home</kbd>/<kbd>End</kbd> 首尾页</span>
+  <span>
+    <button onclick="go(-1)">‹ 上一页</button>
+    <button onclick="go(1)">下一页 ›</button>
+    <button onclick="toggleNotes()">🎤 演讲词</button>
+  </span>
+</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  const notes=document.getElementById('notes');
+  const notesText=document.getElementById('notesText');
+  const pageInfo=document.getElementById('pageInfo');
+  const progress=document.getElementById('progress');
+  let cur=0;
+
+  function render(){
+    slides.forEach((s,i)=>s.classList.toggle('active',i===cur));
+    notesText.textContent=slides[cur].dataset.notes||'';
+    pageInfo.textContent=(cur+1)+' / '+slides.length;
+    progress.style.width=((cur+1)/slides.length*100)+'%';
+  }
+  function go(d){cur=Math.min(slides.length-1,Math.max(0,cur+d));render();}
+  function toggleNotes(){notes.classList.toggle('show');}
+
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown') go(1);
+    else if(e.key==='ArrowLeft'||e.key==='PageUp') go(-1);
+    else if(e.key.toLowerCase()==='n') toggleNotes();
+    else if(e.key==='Home'){cur=0;render();}
+    else if(e.key==='End'){cur=slides.length-1;render();}
+  });
+  document.getElementById('stage').addEventListener('click',e=>{
+    if(e.target.closest('.hud')||e.target.closest('.notes'))return;
+    go(1);
+  });
+  render();
+</script>
+</body>
+</html>
