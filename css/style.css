@@ -631,17 +631,23 @@ textarea, input[type="text"] {
   border: 2.5px solid var(--line);
   border-radius: 14px;
 }
-/* AI 生成的海报配图 */
+/* 海报主图（手绘小人插画 SVG） */
 .poster .ai-art {
   position: relative;
   margin: 10px auto 4px;
   width: 100%;
-}
-.poster .ai-art img {
-  width: 100%;
   border: 2.5px solid var(--line);
   border-radius: 14px;
   box-shadow: 2px 2px 0 var(--line);
+  overflow: hidden;
+  aspect-ratio: 3 / 4;
+}
+.poster .ai-art svg {
+  width: 100%; height: 100%;
+  display: block;
+}
+.poster .ai-art img {
+  width: 100%;
   display: block;
 }
 .poster .ai-art .ai-badge {

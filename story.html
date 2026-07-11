@@ -43,46 +43,25 @@
     box-shadow: 3px 3px 0 #3a2f2a;
     display: flex; align-items: center; gap: 6px;
   }
-  /* 结束卡：暖色底 + 居中文案 */
-  .story-slide.finale {
-    background: repeating-linear-gradient(45deg, #ffe8d1 0 24px, #ffd6b0 24px 48px);
-    display: flex; flex-direction: column; justify-content: center;
-    padding: 40px 16px 30px;
-  }
+  /* 结束卡：与其它分镜一致，插画全屏 + 底部文案 */
   .story-slide.finale .story-caption {
-    background: transparent;
+    background: linear-gradient(to top, rgba(255,246,234,0.95), transparent);
     color: #3a2f2a;
     text-align: center;
-    padding: 12px 8px 4px;
     font-family: 'ZCOOL KuaiLe', sans-serif;
     letter-spacing: 1px;
   }
   .story-slide.finale .story-caption b { color: #d94b6a; }
-  /* 海报里 AI 生成中的占位 */
-  .ai-loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    padding: 30px 10px;
-    border: 2px dashed #3a2f2a;
-    border-radius: 14px;
-    margin: 10px auto 4px;
-    background: #fffbf3;
+  /* 分镜手绘插画：全屏铺满 */
+  .scene-art {
+    position: absolute; inset: 0;
   }
-  .ai-loading .spinner {
-    font-size: 40px;
-    animation: ai-spin 1.6s ease-in-out infinite;
+  .scene-art svg {
+    width: 100%; height: 100%;
+    display: block;
   }
-  @keyframes ai-spin {
-    0%, 100% { transform: rotate(-12deg) scale(1); }
-    50% { transform: rotate(12deg) scale(1.15); }
-  }
-  .ai-loading .txt {
-    font-size: 12px;
-    color: #8a7566;
-    font-family: 'ZCOOL KuaiLe', sans-serif;
-  }
+  /* finale 用插画时不需要条纹底 */
+  .story-slide.finale .scene-art { position: absolute; inset: 0; }
 </style>
 </head>
 <body>
@@ -107,23 +86,11 @@
 
       <div class="avatars" id="posterAvatars"></div>
 
-      <!-- AI 生成的海报主图（打开面板自动生成） -->
-      <div class="ai-art" id="aiArt" style="display:none;">
-        <img id="aiArtImg" alt="AI 爱心海报配图" />
-        <span class="ai-badge">🎨 AI 生成</span>
-      </div>
-      <div class="ai-loading" id="aiLoading">
-        <div class="spinner">🎨</div>
-        <div class="txt">AI 正在把这条爱心链画成海报…</div>
-      </div>
+      <!-- 手绘小人插画海报主图 -->
+      <div class="ai-art" id="posterArt"></div>
 
       <div class="stamp">爱心<br/>认证</div>
     </div>
-
-    <button class="btn btn-warm" style="max-width:280px;margin-top:14px;" id="aiPosterBtn">
-      🔄 换一张 AI 海报
-    </button>
-    <div class="muted" id="aiStatus" style="margin-top:6px;font-size:12px;min-height:18px;"></div>
 
     <div class="share-hint">
       长按海报图片保存到相册，或直接截图分享到朋友圈 / 社群
@@ -139,7 +106,7 @@
 
   <script src="data.js"></script>
   <script src="js/state.js"></script>
-  <script src="config.js" onerror="console.warn('config.js 缺失，AI 海报按钮将提示配置')"></script>
+  <script src="js/scenes.js"></script>
   <script>
     // ?task=xxx → 故事页播对应任务的链条（默认主任务 T1）
     const storyTaskId = new URLSearchParams(location.search).get('task') || 'T1';
@@ -168,7 +135,8 @@
       });
       slides.push({
         stage: { emoji: '🏅', color: '#F9B942', title: '爱心链完成', actor: '爱心链', avatar: '❤️' },
-        caption: '<b>这条爱心链已完整点亮</b><br>正在为它生成专属 AI 海报…',
+        sceneId: 'finale',
+        caption: '<b>这条爱心链已完整点亮</b><br>感谢每一位让善意抵达的人 ❤️',
         photo: null,
         finale: true,
       });
@@ -194,21 +162,16 @@
         div.className = 'story-slide' + (i === current ? ' active' : '')
                       + (s.finale ? ' finale' : '');
         if (s.photo) {
+          // 有真实打卡照 → 照片全屏做背景
           div.style.backgroundImage = `url(${s.photo})`;
+          div.innerHTML = `<div class="story-caption">${s.caption}</div>`;
         } else {
-          // 温暖手绘渐变兜底
-          div.style.background = `linear-gradient(160deg, ${s.stage.color}dd, ${s.stage.color}55 60%, #101425)`;
+          // 没照片 → 手绘小人场景插画（scenes.js，风格与全站一致）
+          div.innerHTML = `
+            <div class="scene-art">${sceneFor(s.sceneId || s.stage.id)}</div>
+            <div class="story-caption">${s.caption}</div>
+          `;
         }
-        // 结束卡：直接进入分享面板（AI 海报），不再单独渲染照片墙
-        div.innerHTML = `
-          ${!s.photo ? `
-            <div class="fallback">
-              <div class="emoji">${s.stage.emoji || s.stage.avatar}</div>
-              <div class="stage-title">${s.stage.title}</div>
-            </div>
-          ` : ''}
-          <div class="story-caption">${s.caption}</div>
-        `;
         container.appendChild(div);
       });
       renderProgressBars();
@@ -237,8 +200,8 @@
       document.getElementById('posterActors').textContent =
         cast.map((r) => r.name).join(' · ');
 
-      // 打开面板就自动生成 AI 海报（只生成一次，之后点按钮重roll）
-      if (!aiGeneratedOnce) generateAiPoster();
+      // 海报主图 = 手绘小人结尾插画（scenes.js，秒开无需等待）
+      document.getElementById('posterArt').innerHTML = sceneFor('finale');
     }
     document.getElementById('shareBtn').addEventListener('click', openShare);
     document.getElementById('closeShare').addEventListener('click', () => {
@@ -256,114 +219,6 @@
     if (document.documentElement.dataset.view === 'web') {
       document.getElementById('storyBackLink').setAttribute('href', 'web.html');
     }
-
-    /* ================================================================
-     * 🎨 AI 生成爱心海报
-     * prompt = 手绘暖风基底 + 任务类型 + 已完成的步骤 + 寄语/感谢语
-     * 走 OpenAI 兼容 /v1/images/generations（config.js 提供网关和 key）
-     * ================================================================ */
-    function buildPosterPrompt() {
-      const task = findTaskById(storyTaskId);
-      const done = ChainState.getStages();
-      const get = (id) => { const r = done.find((c) => c.id === id); return r ? r.payload || {} : null; };
-
-      // 任务类型 → 场景描述
-      const typeScene = {
-        donation: 'a gift box full of warm clothes and books being passed along',
-        need: 'a small rural school receiving a long-awaited care package',
-        carry: 'a cheerful delivery truck and a scooter carrying a parcel through town and countryside',
-        completed: 'a completed chain of hearts glowing above a happy village',
-      };
-      const scene = typeScene[(task && task.type) || 'donation'] || typeScene.donation;
-
-      // 已完成步骤 → 分镜元素
-      const stageBits = [];
-      if (get('posted'))    stageBits.push('a handwritten love letter');
-      if (get('matched'))   stageBits.push('two hands connecting across a map');
-      if (get('reviewed'))  stageBits.push('a circle of thirty tiny smiling faces giving five-star ratings');
-      if (get('leg1'))      stageBits.push('a truck driving through a mountain road at dawn');
-      if (get('leg2'))      stageBits.push('a scooter handing over a parcel at a relay point');
-      if (get('delivered')) stageBits.push('children joyfully opening a box');
-      if (get('certified')) stageBits.push('a golden heart-shaped medal stamp');
-
-      // 寄语 / 感谢语给氛围
-      const msg = (get('posted') || {}).message || '';
-      const thanks = (get('delivered') || {}).thanks || '';
-
-      return [
-        'Hand-drawn warm charity poster illustration, crayon and colored pencil style,',
-        'paper texture background, warm coral pink and amber palette, soft rounded shapes,',
-        `main scene: ${scene},`,
-        stageBits.length ? `story moments: ${stageBits.join(', ')},` : '',
-        'a chain of small hearts linking all elements together,',
-        msg ? `mood inspired by the message "${msg}",` : '',
-        thanks ? `gratitude inspired by "${thanks}",` : '',
-        'cozy heartwarming children book style, no text, no words, no letters',
-      ].filter(Boolean).join(' ');
-    }
-
-    let aiGeneratedOnce = false;
-
-    async function generateAiPoster() {
-      const btn = document.getElementById('aiPosterBtn');
-      const status = document.getElementById('aiStatus');
-      const loading = document.getElementById('aiLoading');
-      const cfg = window.LOVECHAIN_AI;
-      if (!cfg || !cfg.apiKey || cfg.apiKey.startsWith('sk-xxxx')) {
-        loading.style.display = 'none';
-        status.textContent = '⚠️ 未配置 AI key：复制 config.example.js 为 config.js 并填入 key';
-        return;
-      }
-      aiGeneratedOnce = true;
-      btn.disabled = true;
-      btn.textContent = '🎨 AI 绘制中…约 20 秒';
-      status.textContent = '正在把这条爱心链的故事画成海报…';
-      loading.style.display = 'flex';
-      document.getElementById('aiArt').style.display = 'none';
-      try {
-        const res = await fetch(`${cfg.baseUrl}/images/generations`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${cfg.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: cfg.imageModel || 'dall-e-3',
-            prompt: buildPosterPrompt(),
-            n: 1,
-            size: '1024x1024',
-          }),
-        });
-        const data = await res.json();
-        if (!res.ok || data.error) {
-          throw new Error((data.error && data.error.message) || `HTTP ${res.status}`);
-        }
-        const item = (data.data && data.data[0]) || {};
-        const src = item.url || (item.b64_json ? `data:image/png;base64,${item.b64_json}` : null);
-        if (!src) throw new Error('接口没有返回图片');
-        const img = document.getElementById('aiArtImg');
-        img.onload = () => {
-          loading.style.display = 'none';
-          document.getElementById('aiArt').style.display = 'block';
-          btn.textContent = '🔄 换一张 AI 海报';
-          btn.disabled = false;
-          status.textContent = '✨ 生成完毕！长按图片可保存';
-        };
-        img.onerror = () => {
-          loading.style.display = 'none';
-          btn.disabled = false;
-          btn.textContent = '🔄 重试生成 AI 海报';
-          status.textContent = '😢 图片加载失败（可以再点一次重试）';
-        };
-        img.src = src;
-      } catch (e) {
-        loading.style.display = 'none';
-        btn.disabled = false;
-        btn.textContent = '🔄 重试生成 AI 海报';
-        status.textContent = `😢 生成失败：${e.message}（可以再点一次重试）`;
-      }
-    }
-    document.getElementById('aiPosterBtn').addEventListener('click', generateAiPoster);
   </script>
 </body>
 </html>
