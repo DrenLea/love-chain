@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FF8A7B"/>
+      <stop offset="1" stop-color="#F9B942"/>
+    </linearGradient>
+  </defs>
+  <!-- 圆角背景 -->
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="url(#bg)" stroke="#3a2f2a" stroke-width="10"/>
+  <!-- 主体：手绘爱心 + 连接点，象征"爱心链" -->
+  <g stroke="#3a2f2a" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="#fff">
+    <!-- 左小心 -->
+    <path d="M120 240 C 100 210, 130 175, 160 195 C 170 175, 205 195, 195 225 C 190 245, 165 275, 155 285 C 145 275, 125 260, 120 240 Z"/>
+    <!-- 右小心 -->
+    <path d="M320 300 C 300 275, 330 235, 360 260 C 375 240, 410 265, 395 295 C 385 320, 360 345, 350 355 C 335 345, 325 320, 320 300 Z"/>
+    <!-- 中心大爱心 -->
+    <path d="M200 210 C 180 165, 230 130, 260 165 C 280 130, 335 155, 320 205 C 305 245, 265 285, 260 310 C 250 285, 215 250, 200 210 Z" fill="#FF3B6E"/>
+  </g>
+  <!-- 连接虚线：象征接力链 -->
+  <path d="M170 265 C 210 245, 245 270, 275 260 C 310 250, 335 275, 360 285"
+        stroke="#3a2f2a" stroke-width="6" fill="none" stroke-dasharray="12 10"/>
+</svg>

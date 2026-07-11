@@ -1,0 +1,21 @@
+{
+  "name": "爱心链 LoveChain",
+  "short_name": "爱心链",
+  "description": "手绘温暖的爱心接力 Demo — 发布任务 / 接力打卡 / 30 人众评审核",
+  "start_url": "app.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fff6ea",
+  "theme_color": "#FF8A7B",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["social", "lifestyle", "utilities"]
+}

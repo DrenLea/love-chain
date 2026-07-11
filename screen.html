@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>拼图大屏 · 爱心链</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="screen-wrap">
+    <div class="screen-title">❤️ 一次正在发生的爱心之旅</div>
+    <div class="screen-sub">大家一起点亮这条爱心链吧</div>
+
+    <div class="puzzle-grid" id="puzzleGrid"></div>
+
+    <div class="screen-status" id="statusText">等待发起人写下第一份心意…</div>
+
+    <div class="qr-reveal" id="qrReveal">
+      <div style="font-family:'ZCOOL KuaiLe',sans-serif;font-size:20px;">🎉 爱心链已集齐！扫码查看这段暖心故事</div>
+      <div id="qrBox"></div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <script src="data.js"></script>
+  <script src="js/state.js"></script>
+  <script>
+    // 3x3 九宫格：4 个角落 + 上下左右中间 = 7 步流程；正中心恒定为爱心
+    //   [0] posted      [1] matched     [2] reviewed
+    //   [3] leg1        [C] ❤          [5] leg2
+    //   [6] delivered   [7]             [8] certified
+    const CELL_LAYOUT = [
+      'posted', 'matched', 'reviewed',
+      'leg1',   'center',  'leg2',
+      'delivered', null,   'certified',
+    ];
+
+    function stageOf(id) {
+      return id && id !== 'center' ? TASK_STAGES.find((s) => s.id === id) : null;
+    }
+
+    function buildGrid() {
+      const grid = document.getElementById('puzzleGrid');
+      grid.innerHTML = '';
+      CELL_LAYOUT.forEach((id, idx) => {
+        const div = document.createElement('div');
+        div.className = 'puzzle-cell';
+        div.dataset.stageId = id || '';
+        if (id === 'center') {
+          div.classList.add('center');
+          div.textContent = '❤';
+        } else if (!id) {
+          div.textContent = '·';
+        } else {
+          const s = stageOf(id);
+          div.innerHTML = `<span>?</span><span class="step-label">${s.title}</span>`;
+        }
+        grid.appendChild(div);
+      });
+    }
+
+    function renderPuzzle() {
+      const done = ChainState.getStages().map((s) => s.id);
+      const cells = document.querySelectorAll('.puzzle-cell');
+      CELL_LAYOUT.forEach((id, idx) => {
+        if (!id || id === 'center') return;
+        const s = stageOf(id);
+        const el = cells[idx];
+        if (done.includes(id)) {
+          el.classList.add('lit');
+          el.style.setProperty('--cell-color', s.color);
+          el.innerHTML = `<span>${s.emoji}</span><span class="step-label">${s.title}</span>`;
+        } else {
+          el.classList.remove('lit');
+          el.innerHTML = `<span>?</span><span class="step-label">${s.title}</span>`;
+        }
+      });
+
+      const statusEl = document.getElementById('statusText');
+      const next = ChainState.getNextStage();
+      if (!next) {
+        statusEl.textContent = '✨ 全部完成，一条完整的爱心链诞生啦！';
+        revealQR();
+      } else {
+        const lastDone = ChainState.getStages().slice(-1)[0];
+        const lastStage = lastDone ? stageOf(lastDone.id) : null;
+        statusEl.textContent = lastStage
+          ? `${lastStage.actor} 已${lastStage.verb} · 下一步：${next.actor} ${next.verb}`
+          : `等待 ${next.actor} ${next.verb}…`;
+      }
+    }
+
+    let revealed = false;
+    function revealQR() {
+      if (revealed) return;
+      revealed = true;
+      document.getElementById('puzzleGrid').style.opacity = '0.2';
+      const reveal = document.getElementById('qrReveal');
+      reveal.classList.add('show');
+      new QRCode(document.getElementById('qrBox'),
+        { text: STORY_URL, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.H });
+      if (window.confetti) {
+        confetti({ particleCount: 200, spread: 110, origin: { y: 0.6 },
+          colors: ['#FF8A7B', '#F06292', '#4FC3F7', '#F9B942', '#8FD19E'] });
+      }
+    }
+
+    // 保命预案：主持人按 1-7 手动点亮 7 个阶段；R 键重置
+    const KEYS = { '1':'posted', '2':'matched', '3':'reviewed', '4':'leg1', '5':'leg2', '6':'delivered', '7':'certified' };
+    window.addEventListener('keydown', (e) => {
+      if (KEYS[e.key]) ChainState.advance(KEYS[e.key], { manual: true });
+      if (e.key === 'r' || e.key === 'R') ChainState.reset();
+    });
+
+    buildGrid();
+    ChainState.onChange(renderPuzzle);
+    renderPuzzle();
+  </script>
+</body>
+</html>

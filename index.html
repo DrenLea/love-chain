@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>爱心链 · 选择版本</title>
+<meta name="theme-color" content="#FF8A7B" />
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="entry-page">
+    <div style="text-align: center;">
+      <div style="font-size: 60px;">❤️</div>
+      <h1 class="entry-title">爱心链 LoveChain</h1>
+      <p class="entry-lead">
+        黑客松 Demo · 手绘温暖版 · 网页版与手机版共享同一份数据
+      </p>
+    </div>
+
+    <div class="entry-choices">
+      <!-- 网页版入口 -->
+      <a class="entry-card tape" href="web.html" style="--card-color: var(--accent-3);">
+        <span class="big-em">🖥️</span>
+        <h2>🌐 网页版</h2>
+        <p class="desc">
+          大屏三栏布局，实时展示主任务生命周期 & 30 人众评直播条。
+          适合投屏演示、后台运营。
+        </p>
+        <ul>
+          <li>宽屏地图 + 任务网格</li>
+          <li>右侧主任务 7 步实时监控</li>
+          <li>众评评分直播 & 快捷入口</li>
+        </ul>
+        <div class="go">进入网页版 →</div>
+      </a>
+
+      <!-- 手机版入口 -->
+      <a class="entry-card tape" href="app.html" style="--card-color: var(--accent-1);">
+        <span class="big-em">📱</span>
+        <h2>📱 手机版 App</h2>
+        <p class="desc">
+          手机竖屏体验，可像原生 App 一样安装到手机桌面（PWA）。
+          适合发起人 / 接力者 / 评审员实操。
+        </p>
+        <ul>
+          <li>手绘游戏地图 + 图钉任务</li>
+          <li>可离线运行（Service Worker）</li>
+          <li>顶部"📥 安装到桌面"一键装机</li>
+        </ul>
+        <div class="qr-inline">
+          <div class="qr" id="appQr"></div>
+          <div>手机扫码打开<br/>手机版 App</div>
+        </div>
+        <div class="go">进入手机版 →</div>
+      </a>
+    </div>
+
+    <p class="muted" style="text-align: center; margin-top: 12px;">
+      💡 两版共享 <code>localStorage</code>，同一台设备上任一版本发布的任务和进度都会实时同步
+    </p>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+    const appUrl = new URL('app.html', location.href).toString();
+    new QRCode(document.getElementById('appQr'),
+      { text: appUrl, width: 80, height: 80, correctLevel: QRCode.CorrectLevel.M });
+  </script>
+</body>
+</html>

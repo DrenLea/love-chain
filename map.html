@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>爱心地图 · 爱心链</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="css/style.css" />
+<style>
+  #map { height: calc(100vh - 200px); width: 100%; }
+  .leaflet-popup-content-wrapper {
+    border-radius: 16px; border: 2px solid var(--line);
+    box-shadow: 3px 3px 0 var(--line);
+  }
+</style>
+</head>
+<body>
+  <div class="phone-shell">
+    <div class="brand-bar">
+      <a class="back-link" href="app.html">←</a>
+      🗺️ 爱心地图
+      <span class="sub">身边正在发生的爱</span>
+    </div>
+
+    <div class="mini-hud" id="hud">
+      <span class="label">主任务进度</span>
+      <div class="bar"><i id="hudBar" style="width: 0%"></i></div>
+      <span class="label" id="hudNum">0 / 7</span>
+    </div>
+
+    <div class="legend" id="legend"></div>
+    <div id="map"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="data.js"></script>
+  <script src="js/state.js"></script>
+  <script>
+    // 图例：复用 TASK_TYPE_META (DRY)
+    const legendEl = document.getElementById('legend');
+    Object.values(TASK_TYPE_META).forEach((meta) => {
+      const el = document.createElement('div');
+      el.className = 'item';
+      el.innerHTML = `<span class="dot" style="background:${meta.color}"></span>${meta.emoji} ${meta.label}`;
+      legendEl.appendChild(el);
+    });
+
+    const avgLat = MAP_TASKS.reduce((s, t) => s + t.lat, 0) / MAP_TASKS.length;
+    const avgLng = MAP_TASKS.reduce((s, t) => s + t.lng, 0) / MAP_TASKS.length;
+    const map = L.map('map').setView([avgLat, avgLng], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap', maxZoom: 18,
+    }).addTo(map);
+
+    function makePinIcon(meta, pulse) {
+      return L.divIcon({
+        className: '',
+        html: `<div class="pin-icon ${pulse ? 'pulse' : ''}" style="background:${meta.color};position:relative;"><span>${meta.emoji}</span></div>`,
+        iconSize: [38, 38],
+        iconAnchor: [19, 38],
+        popupAnchor: [0, -34],
+      });
+    }
+
+    // 主任务 T1 的图钉的 popup 里会实时反映当前爱心链进度（迷你 7 格灯）
+    const mainTaskId = 'T1';
+    const markers = {};
+
+    MAP_TASKS.forEach((task) => {
+      const meta = TASK_TYPE_META[task.urgent ? 'urgent' : task.type];
+      const marker = L.marker([task.lat, task.lng], {
+        icon: makePinIcon(meta, task.id === mainTaskId),
+      }).addTo(map);
+      marker.bindPopup(() => buildPopup(task, meta));
+      markers[task.id] = { marker, task, meta };
+    });
+
+    function buildPopup(task, meta) {
+      // 主任务显示 7 步 lifecycle mini；其它任务只显示基本信息
+      let lifecycle = '';
+      if (task.id === mainTaskId) {
+        const stages = ChainState.getStages().map((s) => s.id);
+        lifecycle = `<div class="lifecycle-mini">` +
+          TASK_STAGES.map((st, i) => {
+            const done = stages.includes(st.id);
+            return `<span class="${done ? 'done' : ''}" title="${st.title}">${done ? '✓' : (i+1)}</span>`;
+          }).join('') + `</div>`;
+      }
+      const roleHref = task.id === mainTaskId
+        ? 'action.html?role=donor'
+        : (task.type === 'need' ? 'action.html?role=receiver'
+        :  task.type === 'carry' ? 'action.html?role=carrier'
+        :  'action.html?role=donor');
+      return `
+        <div class="task-popup">
+          <span class="tag" style="background:${meta.color}">${meta.emoji} ${meta.label}</span>
+          <div class="title">${task.title}</div>
+          <div class="desc">${task.desc || ''}</div>
+          ${lifecycle}
+          <a class="btn btn-primary" href="${roleHref}">我要参与 →</a>
+        </div>
+      `;
+    }
+
+    // 顺风车路线：一条会"流动"的虚线（走 T3 → T2）
+    L.polyline(
+      [[39.9092, 116.3974], [39.9622, 116.4110], [39.9139, 116.4288]],
+      { color: '#4FC3F7', weight: 4, dashArray: '10 12' }
+    ).addTo(map);
+
+    // 顶部进度条
+    function renderHud() {
+      const done = ChainState.getStages().length;
+      const total = TASK_STAGES.length;
+      document.getElementById('hudBar').style.width = (done / total * 100) + '%';
+      document.getElementById('hudNum').textContent = `${done} / ${total}`;
+      // 打开着的 popup 也刷新一下
+      Object.values(markers).forEach(({marker, task, meta}) => {
+        if (marker.isPopupOpen()) marker.setPopupContent(buildPopup(task, meta));
+      });
+    }
+    renderHud();
+    ChainState.onChange(renderHud);
+  </script>
+</body>
+</html>

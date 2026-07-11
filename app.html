@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>爱心链 App · 手机版</title>
+<meta name="theme-color" content="#FF8A7B" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="爱心链" />
+<meta name="mobile-web-app-capable" content="yes" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="assets/icon.svg" />
+<link rel="stylesheet" href="css/style.css" />
+<script src="js/ua-router.js"></script>
+</head>
+<body>
+  <div class="ua-banner" id="uaBanner">
+    <span>💡 已根据你的浏览器自动切到手机版</span>
+    <a id="uaSwitch">切到网页版</a>
+    <button class="close" id="uaClose" title="关闭">✕</button>
+  </div>
+  <div class="phone-shell">
+    <div class="brand-bar">
+      ❤️ 爱心链
+      <span class="sub">📱 手机版 App</span>
+      <button id="installBtn" class="install-btn" style="display:none;">📥 安装到桌面</button>
+    </div>
+
+    <!-- 主进度条 -->
+    <div class="mini-hud" id="hud">
+      <span class="label">今日主任务</span>
+      <div class="bar"><i id="hudBar" style="width: 0%"></i></div>
+      <span class="label" id="hudNum">0 / 7</span>
+    </div>
+
+    <!-- 顶部身份小胶囊 -->
+    <div class="role-pill-bar" id="rolePillBar"></div>
+
+    <!-- 手绘游戏地图 -->
+    <div class="game-map" id="gameMap">
+      <svg class="paths" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <path d="M 15,80 Q 30,55 50,60 T 85,30" stroke="#c9a887" stroke-width="0.6" stroke-dasharray="1.5 1.2" fill="none" />
+        <path d="M 22,40 Q 40,30 55,20 T 82,15" stroke="#a3c7e0" stroke-width="0.6" stroke-dasharray="1.2 1.2" fill="none" />
+        <path d="M 25,72 Q 45,78 65,72 T 90,80" stroke="#e0a3ba" stroke-width="0.6" stroke-dasharray="1.2 1.2" fill="none" />
+      </svg>
+      <span class="map-decor" style="top:8%; left:6%;">⛰️</span>
+      <span class="map-decor" style="top:18%; left:88%;">🌳</span>
+      <span class="map-decor" style="top:58%; left:4%;">🏠</span>
+      <span class="map-decor" style="top:88%; left:52%;">🌸</span>
+      <span class="map-decor" style="top:8%; left:70%;">☁️</span>
+      <span class="map-decor" style="top:70%; left:92%;">🌲</span>
+    </div>
+
+    <div class="task-board">
+      <div class="task-board-header">
+        <span class="title">🗺️ 附近的爱心任务</span>
+        <span class="count" id="taskCount">0</span>
+      </div>
+    </div>
+
+    <div class="filter-chips" id="filterChips"></div>
+    <div class="task-grid" id="taskGrid"></div>
+  </div>
+
+  <button class="fab-post" id="fabPost" title="发布新任务">+</button>
+
+  <div class="post-sheet-mask" id="postMask">
+    <div class="post-sheet">
+      <h3>发布一个任务</h3>
+      <p class="muted" style="margin-top:-8px;">选个类型，写两行，就能上地图召集大家 ✨</p>
+      <div class="type-picker" id="typePicker"></div>
+      <input type="text" id="postTitle" placeholder="任务标题，比如：捐一批童书" />
+      <textarea id="postDesc" rows="2" placeholder="补充一下细节，位置或联系方式"></textarea>
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-secondary" id="cancelPost" style="flex:1;">取消</button>
+        <button class="btn btn-primary" id="submitPost" style="flex:2;">📮 发布上地图</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/board.js"></script>
+  <script>
+    // 手机版特有：PWA 安装提示
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('installBtn').style.display = 'inline-flex';
+    });
+    document.getElementById('installBtn').addEventListener('click', async () => {
+      if (!deferredPrompt) {
+        alert('这个浏览器不支持一键安装，可用"添加到主屏幕"手动安装 ✨');
+        return;
+      }
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      document.getElementById('installBtn').style.display = 'none';
+    });
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+
+    // 共享看板初始化（web.html 也复用）
+    LoveBoard.init({ scope: 'app' });
+
+    // UA 分流的提示条 + 手动切回入口
+    (function () {
+      const params = new URLSearchParams(location.search);
+      const banner = document.getElementById('uaBanner');
+      const sw = document.getElementById('uaSwitch');
+      if (params.get('auto') === '1') banner.classList.add('show');
+      sw.addEventListener('click', () => {
+        try { localStorage.setItem('lovechain_view_pref', 'web'); } catch (e) {}
+        location.href = 'web.html?force=web';
+      });
+      document.getElementById('uaClose').addEventListener('click', () => {
+        banner.classList.remove('show');
+        try { localStorage.setItem('lovechain_view_pref', 'app'); } catch (e) {}
+      });
+    })();
+  </script>
+</body>
+</html>

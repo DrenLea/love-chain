@@ -1,0 +1,25 @@
+# 依赖 / 构建产物
+node_modules/
+dist/
+build/
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# 本地运行痕迹
+server.log
+*.log
+
+# Playwright / 调试临时产物
+.playwright-mcp/
+0*.png
+screenshots/
+
+# 环境变量
+.env
+.env.local

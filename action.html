@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>角色操作台 · 爱心链</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="phone-shell">
+    <div class="brand-bar">
+      <a class="back-link" href="app.html">←</a>
+      <span id="brandTitle">角色操作台</span>
+      <span class="sub" id="brandSub">切换身份推进爱心链</span>
+    </div>
+
+    <!-- 顶部 7 步全流程条：任何角色都能看到当前流程走到哪 -->
+    <div class="stage-strip" id="stageStrip"></div>
+
+    <!-- 角色切换（顶部横向 Tab，方便同一个 Demo 手机切多个身份） -->
+    <div class="role-tabs" id="roleTabs"></div>
+
+    <!-- 主操作卡片：根据当前角色 & 当前流程阶段动态渲染 -->
+    <div class="card" id="stageCard"></div>
+
+    <div style="padding: 6px 18px 24px; text-align: center;">
+      <a class="btn btn-secondary" href="screen.html">🎪 打开拼图大屏看点亮</a>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="js/state.js"></script>
+  <script>
+    // 从 URL ?role=xxx 取当前身份，默认第一位 donor
+    // 只把"能操作的角色"放进 Tab（watcher 只是围观，不进 action）
+    const PLAYABLE_ROLES = ROLES.filter((r) => r.id !== 'watcher');
+    function getInitialRole() {
+      const q = new URLSearchParams(location.search).get('role');
+      if (q && PLAYABLE_ROLES.some((r) => r.id === q)) return q;
+      return PLAYABLE_ROLES[0].id;
+    }
+    let activeRoleId = getInitialRole();
+
+    /** 顶部 7 步进度 */
+    function renderStageStrip() {
+      const stripEl = document.getElementById('stageStrip');
+      const done = ChainState.getStages().map((s) => s.id);
+      const nextStage = ChainState.getNextStage();
+      stripEl.innerHTML = TASK_STAGES.map((s) => {
+        const isDone = done.includes(s.id);
+        const isCur = nextStage && nextStage.id === s.id;
+        return `
+          <div class="step ${isDone ? 'done' : ''} ${isCur ? 'current' : ''}" style="--stage-color:${s.color}">
+            <span class="dot">${isDone ? '✓' : s.emoji}</span>
+            ${s.title}
+          </div>
+        `;
+      }).join('');
+    }
+
+    /** 角色 Tab */
+    function renderTabs() {
+      const tabsEl = document.getElementById('roleTabs');
+      tabsEl.innerHTML = '';
+      PLAYABLE_ROLES.forEach((role) => {
+        const tab = document.createElement('div');
+        tab.className = 'role-tab' + (role.id === activeRoleId ? ' active' : '');
+        tab.style.setProperty('--stage-color', role.color);
+        tab.innerHTML = `
+          <span class="avatar">${role.emoji}</span>
+          ${role.name}
+        `;
+        tab.addEventListener('click', () => {
+          activeRoleId = role.id;
+          history.replaceState(null, '', `?role=${role.id}`);
+          render();
+        });
+        tabsEl.appendChild(tab);
+      });
+      // 更新品牌栏
+      const role = ROLES.find((r) => r.id === activeRoleId);
+      document.getElementById('brandTitle').textContent = `${role.emoji} ${role.name}`;
+      document.getElementById('brandSub').textContent = role.hint;
+    }
+
+    /** 主操作卡片
+     *  - 找到该角色"当前可操作的阶段"，动态渲染
+     *  - 通过分派表 STAGE_RENDERERS 定义不同阶段的表单内容（不同角色/不同阶段各自不同，但共用同一套确认逻辑：DRY）
+     */
+    const STAGE_RENDERERS = {
+      // 发起人：写寄语
+      posted: (stage) => ({
+        visual: `<div class="stage-visual" style="--stage-color:${stage.color}22">${stage.emoji}</div>`,
+        form: `
+          <div class="muted" style="margin-bottom:8px;">物品：3件童装（预填示例）</div>
+          <textarea id="in_message" rows="2" placeholder="${stage.prompt}">愿这份心意，陪你温暖过冬。</textarea>
+        `,
+        collect: () => ({ message: document.getElementById('in_message').value }),
+      }),
+      // 评审 = 30 人众评（美团评审风格）
+      //  · 点"召集众评" → 每 ~90ms 随机来一位评审员打 4~5 星 + 一句短评
+      //  · 30 位到齐 & 平均 ≥ 4.0 才允许主按钮提交
+      reviewed: (stage) => ({
+        visual: `
+          <div class="crowd-review" id="crowdReview">
+            <div class="crowd-header">
+              <span class="h">📣 爱心众评审</span>
+              <span class="status" id="crowdStatus">等待召集…</span>
+            </div>
+            <div class="rating-summary">
+              <div style="min-width:64px;">
+                <div class="big-num" id="crowdAvg">0.0</div>
+                <div class="stars" id="crowdStars">☆☆☆☆☆</div>
+                <div class="count"><span id="crowdCount">0</span> / 30 位</div>
+              </div>
+              <div class="rating-bar-mini"><i id="crowdBar" style="width:0%"></i></div>
+            </div>
+            <div class="reviewer-grid" id="reviewerGrid"></div>
+            <div class="review-feed" id="reviewFeed"></div>
+            <button class="btn btn-warm crowd-cta" id="startCrowdBtn">▶️ 一键召集 30 位随机评审员</button>
+          </div>
+        `,
+        form: '',
+        collect: () => ({ verdict: `众评通过 · 平均 ${Reviews.average().toFixed(2)} 星` }),
+        onMount: mountCrowdReview,
+      }),
+      // 接力第 1 程：扫码 + 打卡
+      leg1: (stage) => ({
+        visual: `<div class="scan-line-wrap"><div class="frame">📦</div><div class="scan-line"></div></div>`,
+        form: `
+          <div class="muted" style="margin-bottom:8px;">${stage.prompt}</div>
+          <label class="file-btn" id="fileLabel_leg1">📷 拍摄打卡照（可选）
+            <input type="file" id="in_photo" accept="image/*" capture="environment" style="display:none;">
+          </label>
+          <img id="preview_leg1" class="photo-preview" style="display:none;">
+        `,
+        collect: () => {
+          const prev = document.getElementById('preview_leg1');
+          return { photo: prev && prev.style.display === 'block' ? prev.src : null };
+        },
+        onMount: () => bindPhoto('in_photo', 'preview_leg1', 'fileLabel_leg1'),
+      }),
+      // 接力第 2 程：中转打卡
+      leg2: (stage) => ({
+        visual: `<div class="scan-line-wrap"><div class="frame">🛴</div><div class="scan-line"></div></div>`,
+        form: `
+          <div class="muted" style="margin-bottom:8px;">${stage.prompt}</div>
+          <label class="file-btn" id="fileLabel_leg2">📷 中转点打卡（可选）
+            <input type="file" id="in_photo2" accept="image/*" capture="environment" style="display:none;">
+          </label>
+          <img id="preview_leg2" class="photo-preview" style="display:none;">
+        `,
+        collect: () => {
+          const prev = document.getElementById('preview_leg2');
+          return { photo: prev && prev.style.display === 'block' ? prev.src : null };
+        },
+        onMount: () => bindPhoto('in_photo2', 'preview_leg2', 'fileLabel_leg2'),
+      }),
+      // 接收方：拍开箱 + 感谢
+      delivered: (stage) => ({
+        visual: `<div class="stage-visual" style="--stage-color:${stage.color}22">${stage.emoji}</div>`,
+        form: `
+          <label class="file-btn" id="fileLabel_deliver">📷 拍摄开箱照片
+            <input type="file" id="in_deliverPhoto" accept="image/*" capture="environment" style="display:none;">
+          </label>
+          <img id="preview_deliver" class="photo-preview" style="display:none;">
+          <textarea id="in_thanks" rows="2" placeholder="${stage.prompt}">谢谢这份跨越城市的温暖！</textarea>
+        `,
+        collect: () => {
+          const prev = document.getElementById('preview_deliver');
+          return {
+            thanks: document.getElementById('in_thanks').value,
+            photo: prev && prev.style.display === 'block' ? prev.src : null,
+          };
+        },
+        onMount: () => bindPhoto('in_deliverPhoto', 'preview_deliver', 'fileLabel_deliver'),
+      }),
+      // 评审：最终盖章
+      certified: (stage) => ({
+        visual: `<div class="stage-visual" style="--stage-color:${stage.color}22">✨🏅</div>`,
+        form: `<div class="muted" style="margin-bottom:8px;">${stage.prompt}</div>`,
+        collect: () => ({ badge: '爱心勋章 · 已颁发' }),
+      }),
+    };
+
+    function bindPhoto(inputId, previewId, labelId) {
+      const input = document.getElementById(inputId);
+      const label = document.getElementById(labelId);
+      const preview = document.getElementById(previewId);
+      if (!input) return;
+      input.addEventListener('change', () => {
+        const file = input.files[0];
+        if (!file) return;
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = 'block';
+        label.style.display = 'none';
+      });
+    }
+
+    /* ---------- 30 人众评：随机 4~5 星 + 随机短评，逐个"啵"地弹出 ---------- */
+    function mountCrowdReview() {
+      const grid = document.getElementById('reviewerGrid');
+      const feed = document.getElementById('reviewFeed');
+      grid.innerHTML = REVIEWER_POOL.map((r, i) =>
+        `<div class="reviewer-cell" data-i="${i}">${r.emoji}</div>`
+      ).join('');
+
+      // 如果本轮已经攒够 30 条，直接补齐现场
+      renderCrowdState();
+
+      const startBtn = document.getElementById('startCrowdBtn');
+      startBtn.addEventListener('click', () => {
+        if (Reviews.all().length >= 30) return;
+        startBtn.disabled = true;
+        startBtn.textContent = '召集中…评审员正在赶来 ✨';
+        document.getElementById('crowdStatus').textContent = '评审员陆续到场…';
+        runCrowdReviewAnimation();
+      });
+    }
+
+    function runCrowdReviewAnimation() {
+      const shuffled = [...REVIEWER_POOL].sort(() => Math.random() - 0.5);
+      let idx = Reviews.all().length;
+      const tick = () => {
+        if (idx >= 30) {
+          document.getElementById('crowdStatus').textContent = '众评完成 ✨';
+          document.getElementById('crowdStatus').classList.add('pass');
+          const btn = document.getElementById('startCrowdBtn');
+          btn.textContent = '✓ 已通过众评审 · 请点下方"确认"';
+          refreshSubmitEnabled();
+          return;
+        }
+        const reviewer = shuffled[idx];
+        const stars = Math.random() < 0.7 ? 5 : 4;   // 70% 五星，30% 四星 → 保证过 4.0
+        const comment = REVIEW_COMMENT_TEMPLATES[Math.floor(Math.random() * REVIEW_COMMENT_TEMPLATES.length)];
+        Reviews.push({ reviewerId: reviewer.id, stars, comment, ts: Date.now() });
+        renderCrowdState();
+        idx++;
+        setTimeout(tick, 90);
+      };
+      tick();
+    }
+
+    function renderCrowdState() {
+      const list = Reviews.all();
+      const grid = document.getElementById('reviewerGrid');
+      if (!grid) return;
+      const avg = list.length ? (list.reduce((s, r) => s + r.stars, 0) / list.length) : 0;
+      document.getElementById('crowdCount').textContent = list.length;
+      document.getElementById('crowdAvg').textContent = avg.toFixed(1);
+      const full = Math.round(avg);
+      document.getElementById('crowdStars').textContent = '★★★★★'.slice(0, full) + '☆☆☆☆☆'.slice(0, 5 - full);
+      document.getElementById('crowdBar').style.width = (list.length / 30 * 100) + '%';
+      // 逐个点亮小头像
+      const cells = grid.querySelectorAll('.reviewer-cell');
+      list.forEach((r, i) => {
+        const cell = cells[i];
+        if (!cell || cell.classList.contains('pop')) return;
+        cell.classList.add('pop');
+        cell.style.setProperty('--cell-color', r.stars === 5 ? '#fff2c4' : '#e0f4ff');
+        cell.innerHTML = `${REVIEWER_POOL.find((x) => x.id === r.reviewerId)?.emoji || '❤️'}<span class="star-badge">${r.stars}★</span>`;
+      });
+      // feed: 只保留最新 5 条
+      const feed = document.getElementById('reviewFeed');
+      feed.innerHTML = list.slice(-5).reverse().map((r) => {
+        const who = REVIEWER_POOL.find((x) => x.id === r.reviewerId);
+        return `<div class="item">
+          <span class="who">${who ? who.emoji + who.name : '匿名'}</span>
+          <span class="msg">${r.comment}</span>
+          <span class="star">${'★'.repeat(r.stars)}</span>
+        </div>`;
+      }).join('');
+      refreshSubmitEnabled();
+    }
+
+    /** 众评未通过时，禁用主按钮；通过后启用 */
+    function refreshSubmitEnabled() {
+      const btn = document.getElementById('submitBtn');
+      if (!btn) return;
+      const stage = ChainState.getActionableStageForRole(activeRoleId);
+      if (stage && stage.id === 'reviewed') {
+        const passed = Reviews.passed();
+        btn.disabled = !passed;
+        btn.textContent = passed ? '确认：通过众评审核' : '需 30 位评审员且平均 ≥ 4.0 才可确认';
+      }
+    }
+
+    function renderStageCard() {
+      const card = document.getElementById('stageCard');
+      const role = ROLES.find((r) => r.id === activeRoleId);
+      const stage = ChainState.getActionableStageForRole(activeRoleId);
+      const nextStage = ChainState.getNextStage();
+
+      // 情况一：整条链已完成
+      if (!nextStage) {
+        card.innerHTML = `
+          <div style="text-align:center;padding:8px 0;">
+            <div style="font-size:44px;">🏅</div>
+            <div class="h-doodle" style="font-size:22px;">爱心链已完整点亮</div>
+            <p class="muted" style="margin-top:10px;">全流程 7 步都留下了大家的印记。</p>
+            <a class="btn btn-warm" href="story.html" style="margin-top:10px;">🎬 查看暖心故事 &amp; 海报</a>
+          </div>
+        `;
+        return;
+      }
+
+      // 情况二：本角色没轮到 → 提示"下一步在谁那里"
+      if (!stage) {
+        const nextOwner = ROLES.find((r) => r.id === nextStage.ownerRole)
+                       || { name: '系统', emoji: '🤖', color: '#ccc' };
+        card.innerHTML = `
+          <div style="text-align:center;padding:12px 0;">
+            <div style="font-size:44px;">${role.sticker}</div>
+            <div class="h-doodle">你的部分已经完成啦</div>
+            <p class="muted" style="margin-top:10px;">
+              下一步在 <b>${nextOwner.emoji} ${nextOwner.name}</b> 手里：<br/>
+              「${nextStage.title} — ${nextStage.verb}」
+            </p>
+            ${nextStage.ownerRole === 'system'
+              ? `<button class="btn btn-warm" id="autoRun">▶️ 触发智能配对</button>`
+              : `<div class="muted">切换到对应身份 Tab 即可继续。</div>`}
+          </div>
+        `;
+        if (nextStage.ownerRole === 'system') {
+          document.getElementById('autoRun').addEventListener('click', () => {
+            ChainState.advance('matched', { matched: '小林 ↔ 希望小学' });
+          });
+        }
+        return;
+      }
+
+      // 情况三：本角色有事情做 → 渲染阶段表单
+      const renderer = STAGE_RENDERERS[stage.id];
+      const { visual, form, collect, onMount } = renderer(stage);
+      card.innerHTML = `
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <span style="font-size:26px;">${stage.avatar}</span>
+          <div>
+            <div class="h-doodle">${stage.title}</div>
+            <div class="muted">${stage.actor} · ${stage.verb}</div>
+          </div>
+        </div>
+        ${visual}
+        ${form}
+        <button class="btn btn-primary" id="submitBtn" style="background:${stage.color};">
+          确认：${stage.verb}
+        </button>
+      `;
+      if (onMount) onMount();
+      refreshSubmitEnabled();
+      document.getElementById('submitBtn').addEventListener('click', () => {
+        // 众评阶段没通过就拒绝
+        if (stage.id === 'reviewed' && !Reviews.passed()) return;
+        const payload = collect ? collect() : {};
+        ChainState.advance(stage.id, payload);
+        if (stage.id === 'posted' && !ChainState.isDone('matched')) {
+          setTimeout(() => ChainState.advance('matched', { matched: '小林 ↔ 希望小学' }), 500);
+        }
+      });
+    }
+
+    function render() {
+      renderTabs();
+      renderStageStrip();
+      renderStageCard();
+    }
+
+    ChainState.onChange(render);
+    Reviews.onChange(() => renderCrowdState());
+    render();
+  </script>
+</body>
+</html>

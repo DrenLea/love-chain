@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>爱心链 · 网页版</title>
+<meta name="theme-color" content="#FF8A7B" />
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="css/style.css" />
+<script src="js/ua-router.js"></script>
+</head>
+<body>
+  <div class="ua-banner" id="uaBanner">
+    <span>💡 已根据你的浏览器自动切到网页版</span>
+    <a id="uaSwitch">切到手机版 App</a>
+    <button class="close" id="uaClose" title="关闭">✕</button>
+  </div>
+  <div class="web-shell">
+    <!-- 顶部导航 -->
+    <nav class="web-nav">
+      <span class="logo">❤️ 爱心链 LoveChain</span>
+      <div class="links">
+        <a href="web.html">🗺️ 任务地图</a>
+        <a href="screen.html">🎪 拼图大屏</a>
+        <a href="story.html">🎬 暖心故事</a>
+      </div>
+      <div class="right">
+        <div class="role-pill-bar" id="rolePillBar" style="border:none; padding:0;"></div>
+        <a class="app-cta" href="app.html">📱 打开手机版 App</a>
+      </div>
+    </nav>
+
+    <!-- 顶部进度条 -->
+    <div class="mini-hud" id="hud" style="border-radius: 12px; border: 2px solid var(--line); margin-bottom: 16px;">
+      <span class="label">今日主任务</span>
+      <div class="bar"><i id="hudBar" style="width: 0%"></i></div>
+      <span class="label" id="hudNum">0 / 7</span>
+    </div>
+
+    <div class="web-grid">
+      <!-- 左：地图 + 任务看板 -->
+      <div class="col-left">
+        <div class="panel" style="padding: 12px;">
+          <div class="game-map" id="gameMap" style="height: 460px;">
+            <svg class="paths" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <path d="M 15,80 Q 30,55 50,60 T 85,30" stroke="#c9a887" stroke-width="0.6" stroke-dasharray="1.5 1.2" fill="none" />
+              <path d="M 22,40 Q 40,30 55,20 T 82,15" stroke="#a3c7e0" stroke-width="0.6" stroke-dasharray="1.2 1.2" fill="none" />
+              <path d="M 25,72 Q 45,78 65,72 T 90,80" stroke="#e0a3ba" stroke-width="0.6" stroke-dasharray="1.2 1.2" fill="none" />
+            </svg>
+            <span class="map-decor" style="top:8%; left:6%;">⛰️</span>
+            <span class="map-decor" style="top:18%; left:88%;">🌳</span>
+            <span class="map-decor" style="top:58%; left:4%;">🏠</span>
+            <span class="map-decor" style="top:88%; left:52%;">🌸</span>
+            <span class="map-decor" style="top:8%; left:70%;">☁️</span>
+            <span class="map-decor" style="top:70%; left:92%;">🌲</span>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top: 22px;">
+          <h3>🗺️ 附近的爱心任务 <span class="badge" id="taskCount">0</span></h3>
+          <div class="filter-chips" id="filterChips" style="padding: 0 0 10px;"></div>
+          <div class="task-grid" id="taskGrid"></div>
+        </div>
+      </div>
+
+      <!-- 右：主任务生命周期 + 众评直播 -->
+      <div class="col-right">
+        <div class="panel">
+          <h3>📖 主任务 · 7 步爱心链 <span class="badge" id="lifeCount">0/7</span></h3>
+          <div class="lifecycle-list" id="lifecycleList"></div>
+        </div>
+
+        <div class="panel" style="margin-top: 22px;">
+          <h3>📣 爱心众评 · 实时评分 <span class="badge" id="reviewCount">0/30</span></h3>
+          <div class="live-reviews" id="liveReviews">
+            <div class="empty">还没有评审员到场，去 <a href="action.html?role=judge">爱心评审台</a> 一键召集吧 ✨</div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top: 22px; text-align: center;">
+          <h3 style="justify-content: center;">🎯 演示快捷入口</h3>
+          <div style="display: grid; gap: 8px;">
+            <a class="btn btn-primary" href="action.html?role=donor">🎁 发起爱心（1 步：写寄语）</a>
+            <a class="btn btn-warm" href="action.html?role=judge">⚖️ 爱心评审（召集 30 人众评）</a>
+            <a class="btn btn-secondary" href="action.html?role=carrier">🚚 加入接力（2 程打卡）</a>
+            <a class="btn btn-secondary" href="action.html?role=receiver">🏫 接收爱心（拍开箱）</a>
+            <a class="btn btn-secondary" href="screen.html">🎪 打开拼图大屏</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 网页版仍保留右下 FAB，任何位置都能发布 -->
+  <button class="fab-post" id="fabPost" title="发布新任务" style="right: 40px;">+</button>
+
+  <div class="post-sheet-mask" id="postMask">
+    <div class="post-sheet" style="max-width: 480px; border-radius: 22px; margin-bottom: 40px;">
+      <h3>发布一个任务</h3>
+      <p class="muted" style="margin-top:-8px;">网页发布也会同步到手机版 App（同一 localStorage）✨</p>
+      <div class="type-picker" id="typePicker"></div>
+      <input type="text" id="postTitle" placeholder="任务标题，比如：捐一批童书" />
+      <textarea id="postDesc" rows="2" placeholder="补充一下细节，位置或联系方式"></textarea>
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-secondary" id="cancelPost" style="flex:1;">取消</button>
+        <button class="btn btn-primary" id="submitPost" style="flex:2;">📮 发布上地图</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/board.js"></script>
+  <script>
+    // 网页版专有：右侧生命周期时间线
+    LoveBoard.renderLifecycle = function () {
+      const el = document.getElementById('lifecycleList');
+      if (!el) return;
+      const done = ChainState.getStages().map((s) => s.id);
+      const next = ChainState.getNextStage();
+      document.getElementById('lifeCount').textContent = `${done.length}/${TASK_STAGES.length}`;
+      el.innerHTML = TASK_STAGES.map((s) => {
+        const isDone = done.includes(s.id);
+        const isCur = next && next.id === s.id;
+        return `
+          <div class="lifecycle-row ${isDone ? 'done' : ''} ${isCur ? 'current' : ''}" style="--stage-color:${s.color}">
+            <div class="em">${isDone ? '✓' : s.emoji}</div>
+            <div class="info">
+              <div class="t">${s.title}</div>
+              <div class="s">${s.actor} · ${s.verb}</div>
+            </div>
+            <div class="flag">${isDone ? '已完成' : isCur ? '进行中' : '待开始'}</div>
+          </div>
+        `;
+      }).join('');
+    };
+
+    // 网页版专有：众评实时直播
+    LoveBoard.renderLiveReviews = function () {
+      const el = document.getElementById('liveReviews');
+      if (!el) return;
+      const list = Reviews.all();
+      document.getElementById('reviewCount').textContent = `${list.length}/30`;
+      if (!list.length) {
+        el.innerHTML = `<div class="empty">还没有评审员到场，去 <a href="action.html?role=judge">爱心评审台</a> 一键召集吧 ✨</div>`;
+        return;
+      }
+      const avg = list.reduce((s, r) => s + r.stars, 0) / list.length;
+      const summary = `
+        <div class="summary">
+          <div class="big">${avg.toFixed(1)}</div>
+          <div>
+            <div class="stars" style="color:var(--accent-2)">${'★'.repeat(Math.round(avg))}${'☆'.repeat(5 - Math.round(avg))}</div>
+            <div class="txt">${list.length} 位评审员已打分</div>
+          </div>
+        </div>
+      `;
+      const items = list.slice(-8).reverse().map((r) => {
+        const who = REVIEWER_POOL.find((x) => x.id === r.reviewerId);
+        return `<div class="item">
+          <span class="who">${who ? who.emoji + who.name : '匿名'}</span>
+          <span class="msg">${r.comment}</span>
+          <span class="stars">${'★'.repeat(r.stars)}</span>
+        </div>`;
+      }).join('');
+      el.innerHTML = summary + items;
+    };
+
+    LoveBoard.init({ scope: 'web' });
+
+    // UA 分流：若是自动路过来的，顶部亮出小提示；也允许用户手动切
+    (function () {
+      const params = new URLSearchParams(location.search);
+      const banner = document.getElementById('uaBanner');
+      const sw = document.getElementById('uaSwitch');
+      if (params.get('auto') === '1') banner.classList.add('show');
+      sw.addEventListener('click', () => {
+        try { localStorage.setItem('lovechain_view_pref', 'app'); } catch (e) {}
+        location.href = 'app.html?force=app';
+      });
+      document.getElementById('uaClose').addEventListener('click', () => {
+        banner.classList.remove('show');
+        try { localStorage.setItem('lovechain_view_pref', 'web'); } catch (e) {}
+      });
+    })();
+  </script>
+</body>
+</html>

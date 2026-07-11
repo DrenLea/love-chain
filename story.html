@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>暖心故事 · 爱心链</title>
+<link rel="stylesheet" href="css/style.css" />
+<style>
+  html, body { height: 100%; background: #000; }
+  .story-slide .fallback {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 12px;
+  }
+  .story-slide .fallback .emoji { font-size: 110px; opacity: 0.9; }
+  .story-slide .fallback .stage-title {
+    font-family: 'ZCOOL KuaiLe', sans-serif;
+    color: #fff; font-size: 22px; letter-spacing: 2px;
+    background: rgba(0,0,0,0.4); padding: 6px 20px; border-radius: 999px;
+  }
+  .story-tap-zones { position: absolute; inset: 0; display: flex; z-index: 4; }
+  .story-tap-zones div { flex: 1; }
+  .share-fab {
+    position: absolute; bottom: 26px; right: 16px; z-index: 6;
+    background: #fff; border: 2.5px solid #3a2f2a;
+    border-radius: 999px; padding: 10px 18px;
+    font-family: 'ZCOOL KuaiLe', sans-serif;
+    letter-spacing: 1px;
+    font-size: 14px;
+    box-shadow: 3px 3px 0 #3a2f2a;
+    display: flex; align-items: center; gap: 6px;
+  }
+</style>
+</head>
+<body>
+  <div class="story-scene" id="storyScene">
+    <div class="story-progress" id="storyProgress"></div>
+    <div id="slidesContainer"></div>
+    <div class="story-tap-zones">
+      <div id="tapPrev"></div>
+      <div id="tapNext"></div>
+    </div>
+    <button class="share-fab" id="shareBtn">📤 生成分享海报</button>
+  </div>
+
+  <div class="share-panel" id="sharePanel">
+    <button class="close-share" id="closeShare">✕</button>
+    <h3>把这条爱心之旅分享出去</h3>
+
+    <div class="poster" id="poster">
+      <div class="header-ribbon">❤️ LOVE CHAIN · 爱心链</div>
+      <div class="title">一条正在发生的爱心之旅</div>
+      <div class="subtitle" id="posterActors"></div>
+
+      <div class="avatars" id="posterAvatars"></div>
+
+      <div class="qr-box"><div id="posterQrBox"></div></div>
+      <div class="subtitle">扫码查看完整暖心故事</div>
+
+      <div class="stamp">爱心<br/>认证</div>
+    </div>
+
+    <div class="share-hint">
+      长按海报图片保存到相册，或直接截图分享到朋友圈 / 社群
+    </div>
+
+    <button class="btn btn-primary" style="max-width:280px;margin-top:16px;" id="saveBtn">
+      📷 保存海报到相册
+    </button>
+    <a class="btn btn-secondary" style="max-width:280px;margin-top:10px;" href="app.html">
+      🏠 返回首页选择其它身份
+    </a>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="data.js"></script>
+  <script src="js/state.js"></script>
+  <script>
+    // 一条爱心链 = 7 个分镜 + 1 张结束卡；所有文案/emoji 复用 TASK_STAGES（DRY）
+    function buildSlides() {
+      const done = ChainState.getStages();
+      const findPayload = (id) => {
+        const rec = done.find((c) => c.id === id);
+        return rec ? rec.payload || {} : null;
+      };
+      const slides = TASK_STAGES.map((stage) => {
+        const payload = findPayload(stage.id);
+        let caption = `<b>${stage.actor}</b> ${stage.verb}`;
+        if (stage.id === 'posted' && payload && payload.message) {
+          caption += `<br>“${payload.message}”`;
+        }
+        if (stage.id === 'delivered' && payload && payload.thanks) {
+          caption += `<br>“${payload.thanks}”`;
+        }
+        const photo = payload && payload.photo ? payload.photo : null;
+        return { stage, caption, photo };
+      });
+      slides.push({
+        stage: { emoji: '🏅', color: '#F9B942', title: '爱心链完成', actor: '爱心链', avatar: '❤️' },
+        caption: '<b>这条爱心链已完整点亮</b><br>感谢每一位让善意抵达的人 ❤️',
+        photo: null,
+        finale: true,
+      });
+      return slides;
+    }
+
+    let current = 0;
+    let slides = [];
+    let timer = null;
+
+    function renderProgressBars() {
+      const bar = document.getElementById('storyProgress');
+      bar.innerHTML = slides.map((_, i) =>
+        `<span class="${i < current ? 'done' : i === current ? 'active' : ''}"><i></i></span>`
+      ).join('');
+    }
+
+    function renderSlide() {
+      const container = document.getElementById('slidesContainer');
+      container.innerHTML = '';
+      slides.forEach((s, i) => {
+        const div = document.createElement('div');
+        div.className = 'story-slide' + (i === current ? ' active' : '');
+        if (s.photo) {
+          div.style.backgroundImage = `url(${s.photo})`;
+        } else {
+          // 温暖手绘渐变兜底
+          div.style.background = `linear-gradient(160deg, ${s.stage.color}dd, ${s.stage.color}55 60%, #101425)`;
+        }
+        div.innerHTML = `
+          ${!s.photo ? `
+            <div class="fallback">
+              <div class="emoji">${s.stage.emoji || s.stage.avatar}</div>
+              <div class="stage-title">${s.stage.title}</div>
+            </div>
+          ` : ''}
+          <div class="story-caption">${s.caption}</div>
+        `;
+        container.appendChild(div);
+      });
+      renderProgressBars();
+    }
+
+    function goTo(i) {
+      clearTimeout(timer);
+      if (i < 0) i = 0;
+      if (i >= slides.length) { openShare(); return; }
+      current = i;
+      renderSlide();
+      timer = setTimeout(() => goTo(current + 1), 3200);
+    }
+
+    document.getElementById('tapPrev').addEventListener('click', () => goTo(current - 1));
+    document.getElementById('tapNext').addEventListener('click', () => goTo(current + 1));
+
+    function openShare() {
+      clearTimeout(timer);
+      document.getElementById('sharePanel').classList.add('show');
+
+      // 海报头像链：从 ROLES 里取除 watcher 外的四位（DRY）
+      const cast = ROLES.filter((r) => r.id !== 'watcher');
+      document.getElementById('posterAvatars').innerHTML =
+        cast.map((r, i) => `${r.emoji}${i < cast.length - 1 ? '<span class="arr">→</span>' : ''}`).join('');
+      document.getElementById('posterActors').textContent =
+        cast.map((r) => r.name).join(' · ');
+
+      const box = document.getElementById('posterQrBox');
+      box.innerHTML = '';
+      new QRCode(box, { text: STORY_URL, width: 140, height: 140, correctLevel: QRCode.CorrectLevel.H });
+    }
+    document.getElementById('shareBtn').addEventListener('click', openShare);
+    document.getElementById('closeShare').addEventListener('click', () => {
+      document.getElementById('sharePanel').classList.remove('show');
+      renderSlide();
+    });
+    document.getElementById('saveBtn').addEventListener('click', () => {
+      alert('提示：长按海报图片即可保存到相册；Demo 环境请直接截图后分享 ✨');
+    });
+
+    slides = buildSlides();
+    goTo(0);
+  </script>
+</body>
+</html>
