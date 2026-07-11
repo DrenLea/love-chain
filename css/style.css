@@ -1546,12 +1546,17 @@ html[data-view="web"] .puzzle-cell { font-size: 44px; }
 html[data-view="web"] .puzzle-cell .step-label { font-size: 12px; }
 
 /* ---------- web 版故事页 & 海报宽屏适配 ---------- */
-/* 分镜区域：居中限宽的"剧场"而不是无限拉伸 */
+/* 分镜区域：16:9 居中剧场，与横版插画画布匹配（flex 居中在 story.html 内定义） */
 html[data-view="web"] .story-scene {
-  max-width: 900px;
+  width: min(1240px, 100vw);
+  height: auto;
+  aspect-ratio: 16 / 9;
+  max-height: 100vh;
   margin: 0 auto;
-  border-left: 3px solid var(--line);
-  border-right: 3px solid var(--line);
+  border: 3px solid var(--line);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: var(--shadow-doodle);
 }
 /* 分享面板整体铺满视口，内容居中 */
 html[data-view="web"] .share-panel {

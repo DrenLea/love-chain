@@ -2,7 +2,10 @@
  * 爱心链 · 手绘小人场景插画 (DRY: story.html 分镜背景 + 海报主图共用)
  * 纯内联 SVG，无外部资源；风格与全站一致：
  *   深棕描边 #3a2f2a / 暖纸底 / 珊瑚粉·橙黄·天蓝色块 / 圆头小人
- * STAGE_SCENES[stageId] → 完整 SVG 字符串（竖版 360x480）
+ *
+ * 双版式：
+ *   sceneFor(id)        → 360x480 竖版（手机 / 海报）
+ *   sceneFor(id, true)  → 960x480 横版（web 宽屏，中央构图 + 两侧补装饰）
  */
 (function (global) {
   const INK = '#3a2f2a';
@@ -58,27 +61,49 @@
     </g>`;
   }
 
-  // 每幕的统一外壳：天空渐变 + 纸纹点 + 地面 + 内容
-  function scene(skyA, skyB, groundColor, inner) {
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 480" preserveAspectRatio="xMidYMid slice">
+  // 小灌木：横版两侧的地面点缀
+  function bush(x, y, c) {
+    return `<g stroke="${INK}" stroke-width="2.5" fill="${c || '#8fd19e'}">
+      <ellipse cx="${x}" cy="${y}" rx="24" ry="14"/>
+      <ellipse cx="${x - 16}" cy="${y + 4}" rx="14" ry="9"/>
+      <ellipse cx="${x + 17}" cy="${y + 4}" rx="15" ry="9"/>
+    </g>`;
+  }
+
+  /* ---------- 场景外壳：竖版 360x480 / 横版 960x540 (16:9) ---------- */
+  function shell(skyA, skyB, groundColor, inner, wide) {
+    const W = wide ? 960 : 360;
+    const H = wide ? 540 : 480;
+    // 地面波浪横跨整个画布宽（横版内容整体下移 60 对齐 540 高度）
+    const groundPath = wide
+      ? 'M-10,442 Q150,412 320,438 T640,428 T970,438 L970,550 L-10,550 Z'
+      : 'M-10,382 Q90,352 180,378 T370,372 L370,490 L-10,490 Z';
+    // 横版：主体内容平移到中央偏下，两侧补装饰避免空
+    const content = wide
+      ? `<g transform="translate(300,60)">${inner}</g>
+         ${cloud(120, 96, 1)}${cloud(846, 76, 0.85)}
+         ${heart(72, 356, 9)}${heart(892, 372, 7, '#f9b942')}
+         ${bush(96, 478)}${bush(868, 486, '#a8d8b0')}
+         ${bush(180, 506, '#b9dfb0')}${bush(790, 512)}`
+      : inner;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMax slice">
       <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stop-color="${skyA}"/><stop offset="1" stop-color="${skyB}"/>
       </linearGradient></defs>
-      <rect width="360" height="480" fill="url(#sky)"/>
+      <rect width="${W}" height="${H}" fill="url(#sky)"/>
       <g fill="${INK}" opacity="0.05">
-        ${Array.from({ length: 6 }, (_, i) => `<circle cx="${(i * 97 + 40) % 340}" cy="${(i * 143 + 60) % 440}" r="2.5"/>`).join('')}
+        ${Array.from({ length: wide ? 14 : 6 }, (_, i) => `<circle cx="${(i * 97 + 40) % (W - 20)}" cy="${(i * 143 + 60) % (H - 40)}" r="2.5"/>`).join('')}
       </g>
-      <path d="M-10,382 Q90,352 180,378 T370,372 L370,490 L-10,490 Z" fill="${groundColor}" stroke="${INK}" stroke-width="3"/>
-      ${inner}
+      <path d="${groundPath}" fill="${groundColor}" stroke="${INK}" stroke-width="3"/>
+      ${content}
     </svg>`;
   }
 
-  /* ---------- 七幕 + 结尾海报 ---------- */
-
-  const STAGE_SCENES = {
+  /* ---------- 七幕 + 结尾：只写一份内容，双版式共用 (DRY) ---------- */
+  const SCENE_DEFS = {
 
     // ① 发布爱心：小林抱着礼盒，头顶飘出手写信和爱心
-    posted: scene('#ffe9d6', '#fff6ea', '#ffd9a8', `
+    posted: ['#ffe9d6', '#fff6ea', '#ffd9a8', `
       ${sun(300, 72)}${cloud(80, 66, 0.9)}
       ${figure(150, 400, '#ff8a7b', { pose: 'hold' })}
       <g stroke="${INK}" stroke-width="2.5" stroke-linejoin="round">
@@ -91,10 +116,10 @@
         <path d="M212 278 l33,22 33,-22" fill="none"/>
       </g>
       ${heart(245, 250, 9)}${heart(120, 270, 7, '#f06292')}${heart(200, 220, 6, '#ffb27e')}
-    `),
+    `],
 
     // ② 智能配对：两个小人隔着虚线牵起一颗大爱心
-    matched: scene('#ffe3ec', '#fff6ea', '#f8c8d8', `
+    matched: ['#ffe3ec', '#fff6ea', '#f8c8d8', `
       ${cloud(70, 70, 0.8)}${cloud(290, 96, 1)}
       ${figure(90, 402, '#ff8a7b', { pose: 'wave' })}
       ${figure(270, 402, '#f06292', { pose: 'wave', flip: true })}
@@ -103,10 +128,10 @@
       <g font-family="sans-serif" font-size="13" fill="${INK}" text-anchor="middle" opacity="0.7">
         <text x="90" y="436">发起人</text><text x="270" y="436">接收方</text>
       </g>
-    `),
+    `],
 
     // ③ 众评审核：一排小评审举着星星牌子
-    reviewed: scene('#fff2cf', '#fff6ea', '#ffe08a', `
+    reviewed: ['#fff2cf', '#fff6ea', '#ffe08a', `
       ${sun(52, 64)}
       ${figure(80, 396, '#f9b942')}
       ${figure(180, 402, '#4fc3f7')}
@@ -122,10 +147,10 @@
       <g font-family="sans-serif" font-size="12" fill="${INK}" opacity="0.65" text-anchor="middle">
         <text x="180" y="448">30 位爱心评审员在线打分</text>
       </g>
-    `),
+    `],
 
     // ④ 接力第 1 程：小卡车翻山，车斗里装着爱心包裹
-    leg1: scene('#d8ecfb', '#fff6ea', '#bfe3c0', `
+    leg1: ['#d8ecfb', '#fff6ea', '#bfe3c0', `
       ${sun(310, 66)}${cloud(90, 82, 1)}
       <path d="M-10,382 L80,300 L150,382" fill="#a8d0a0" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>
       <path d="M60,382 L150,270 L250,382" fill="#8fbF95" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>
@@ -138,10 +163,10 @@
       <circle cx="270" cy="358" r="7" fill="${INK}" opacity="0.85"/>
       ${heart(218, 322, 10)}
       <path d="M40,420 h60 M120,432 h44" stroke="${INK}" stroke-width="2.5" stroke-dasharray="8 7" opacity="0.5"/>
-    `),
+    `],
 
     // ⑤ 接力第 2 程：滑板车小哥载着包裹冲坡
-    leg2: scene('#dff1fd', '#fff6ea', '#cfe8f7', `
+    leg2: ['#dff1fd', '#fff6ea', '#cfe8f7', `
       ${cloud(60, 64, 0.9)}${cloud(280, 92, 1.1)}
       ${figure(196, 380, '#6bc0f8', { pose: 'walk' })}
       <g stroke="${INK}" stroke-width="3" stroke-linecap="round">
@@ -158,10 +183,10 @@
       <g font-family="sans-serif" font-size="12" fill="${INK}" opacity="0.65" text-anchor="middle">
         <text x="180" y="448">中转顺利，继续向前</text>
       </g>
-    `),
+    `],
 
     // ⑥ 签收开箱：小朋友跳起来，礼盒炸出爱心
-    delivered: scene('#ffe3ec', '#fff6ea', '#ffd3e0', `
+    delivered: ['#ffe3ec', '#fff6ea', '#ffd3e0', `
       ${sun(58, 70)}${cloud(280, 78, 1)}
       ${figure(120, 398, '#f06292', { pose: 'jump' })}
       ${figure(240, 402, '#8fd19e', { pose: 'wave', flip: true, skin: '#ffd9b8' })}
@@ -173,10 +198,10 @@
       <g font-family="sans-serif" font-size="12" fill="${INK}" opacity="0.65" text-anchor="middle">
         <text x="180" y="448">开箱瞬间，谢谢远方的你</text>
       </g>
-    `),
+    `],
 
     // ⑦ 盖章认证：评审官给证书盖上爱心大印
-    certified: scene('#fff2cf', '#fff6ea', '#ffe4b8', `
+    certified: ['#fff2cf', '#fff6ea', '#ffe4b8', `
       ${cloud(76, 70, 0.9)}${cloud(292, 60, 0.8)}
       ${figure(250, 398, '#f9b942', { flip: true })}
       <g stroke="${INK}" stroke-width="2.5" stroke-linejoin="round">
@@ -191,26 +216,43 @@
       <g font-family="sans-serif" font-size="12" fill="${INK}" opacity="0.65" text-anchor="middle">
         <text x="180" y="448">全程留痕 · 爱心认证</text>
       </g>
-    `),
+    `],
+
+    // 结尾海报主图：一条爱心链把四位角色串起来
+    finale: ['#ffe9d6', '#fff0f4', '#ffd9a8', `
+      ${sun(304, 60)}${cloud(70, 60, 0.9)}
+      ${figure(60, 396, '#ff8a7b', { pose: 'wave' })}
+      ${figure(146, 406, '#4fc3f7', { pose: 'walk' })}
+      ${figure(226, 406, '#f06292', { pose: 'hold', flip: true })}
+      ${figure(306, 396, '#f9b942', { pose: 'wave', flip: true })}
+      <path d="M60,306 Q104,282 146,312 T226,312 T306,306"
+            stroke="${INK}" stroke-width="2.5" stroke-dasharray="7 6" fill="none"/>
+      ${heart(60, 300, 9)}${heart(146, 306, 9, '#4fc3f7')}${heart(226, 306, 9, '#f06292')}${heart(306, 300, 9, '#f9b942')}
+      ${heart(180, 240, 20)}
+      <g font-family="sans-serif" font-size="13" fill="${INK}" opacity="0.7" text-anchor="middle">
+        <text x="180" y="448">一条爱心链，大家一起点亮</text>
+      </g>
+    `],
   };
 
-  // 结尾海报主图：一条爱心链把四位角色串起来
-  STAGE_SCENES.finale = scene('#ffe9d6', '#fff0f4', '#ffd9a8', `
-    ${sun(304, 60)}${cloud(70, 60, 0.9)}
-    ${figure(60, 396, '#ff8a7b', { pose: 'wave' })}
-    ${figure(146, 406, '#4fc3f7', { pose: 'walk' })}
-    ${figure(226, 406, '#f06292', { pose: 'hold', flip: true })}
-    ${figure(306, 396, '#f9b942', { pose: 'wave', flip: true })}
-    <path d="M60,306 Q104,282 146,312 T226,312 T306,306"
-          stroke="${INK}" stroke-width="2.5" stroke-dasharray="7 6" fill="none"/>
-    ${heart(60, 300, 9)}${heart(146, 306, 9, '#4fc3f7')}${heart(226, 306, 9, '#f06292')}${heart(306, 300, 9, '#f9b942')}
-    ${heart(180, 240, 20)}
-    <g font-family="sans-serif" font-size="13" fill="${INK}" opacity="0.7" text-anchor="middle">
-      <text x="180" y="448">一条爱心链，大家一起点亮</text>
-    </g>
-  `);
+  /* ---------- 导出：按需构建 + 缓存 ---------- */
+  const cache = {};
+  function sceneFor(stageId, wide) {
+    const id = SCENE_DEFS[stageId] ? stageId : 'finale';
+    const key = id + (wide ? ':w' : ':p');
+    if (!cache[key]) {
+      const [a, b, g, inner] = SCENE_DEFS[id];
+      cache[key] = shell(a, b, g, inner, !!wide);
+    }
+    return cache[key];
+  }
 
-  /** 取某阶段的场景 SVG（找不到时退回 finale） */
+  // 向后兼容：STAGE_SCENES[id] 仍可直接取竖版
+  const STAGE_SCENES = {};
+  Object.keys(SCENE_DEFS).forEach((id) => {
+    Object.defineProperty(STAGE_SCENES, id, { get: () => sceneFor(id), enumerable: true });
+  });
+
   global.STAGE_SCENES = STAGE_SCENES;
-  global.sceneFor = (stageId) => STAGE_SCENES[stageId] || STAGE_SCENES.finale;
+  global.sceneFor = sceneFor;
 })(window);

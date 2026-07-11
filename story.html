@@ -20,6 +20,16 @@
 </script>
 <style>
   html, body { height: 100%; background: #000; }
+  /* web 宽屏：分镜居中成 16:9 剧场 */
+  html[data-view="web"] body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background:
+      radial-gradient(circle at 20% 20%, #2a2018 0 30%, transparent 70%),
+      #171310;
+  }
   .story-slide .fallback {
     position: absolute; inset: 0;
     display: flex; align-items: center; justify-content: center;
@@ -166,9 +176,10 @@
           div.style.backgroundImage = `url(${s.photo})`;
           div.innerHTML = `<div class="story-caption">${s.caption}</div>`;
         } else {
-          // 没照片 → 手绘小人场景插画（scenes.js，风格与全站一致）
+          // 没照片 → 手绘小人场景插画（scenes.js）；web 宽屏取横版构图
+          const wide = document.documentElement.dataset.view === 'web';
           div.innerHTML = `
-            <div class="scene-art">${sceneFor(s.sceneId || s.stage.id)}</div>
+            <div class="scene-art">${sceneFor(s.sceneId || s.stage.id, wide)}</div>
             <div class="story-caption">${s.caption}</div>
           `;
         }
