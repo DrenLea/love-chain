@@ -122,15 +122,22 @@
           <span class="tag" style="background:${meta.color}">${meta.emoji} ${meta.label}</span>
           <div class="t-title">${t.title}</div>
           <div class="t-actor">👤 ${t.actor || '匿名'} · ${t.desc || ''}</div>
-          ${t.hero ? this.buildLifecycleMini() : ''}
+          ${this.buildLifecycleMini(t.id)}
         `;
         div.addEventListener('click', () => this.openTaskDetail(t));
         grid.appendChild(div);
       });
     },
 
-    buildLifecycleMini() {
-      const done = ChainState.getStages().map((s) => s.id);
+    /** 每个任务显示它自己的 7 格进度（多任务进度互相独立） */
+    buildLifecycleMini(taskId) {
+      const done = ChainState.stagesOf(taskId).map((s) => s.id);
+      if (!done.length && taskId !== 'T1') {
+        // 还没开始的任务显示灰点，一眼区分"待认领"
+        return `<div class="lifecycle-mini">` + TASK_STAGES.map((s, i) =>
+          `<span title="${s.title}">${i + 1}</span>`
+        ).join('') + `</div>`;
+      }
       return `<div class="lifecycle-mini">` + TASK_STAGES.map((s, i) =>
         `<span class="${done.includes(s.id) ? 'done' : ''}" title="${s.title}">${done.includes(s.id) ? '✓' : (i+1)}</span>`
       ).join('') + `</div>`;

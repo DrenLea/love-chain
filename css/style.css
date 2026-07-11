@@ -919,16 +919,17 @@ textarea, input[type="text"] {
   background: linear-gradient(120deg, #fff7e0, #fff);
 }
 .task-cardlet.hero .t-title { font-size: 16px; }
-.task-cardlet.hero .lifecycle-mini {
+.task-cardlet .lifecycle-mini {
   display: flex; gap: 3px; margin-top: 6px;
 }
-.task-cardlet.hero .lifecycle-mini span {
+.task-cardlet .lifecycle-mini span {
   width: 14px; height: 14px; border-radius: 50%;
   border: 1.5px solid var(--line);
   background: #fff;
   font-size: 9px; text-align: center; line-height: 11px;
+  color: var(--ink-muted);
 }
-.task-cardlet.hero .lifecycle-mini span.done { background: var(--accent-2); }
+.task-cardlet .lifecycle-mini span.done { background: var(--accent-2); color: #fff; }
 
 /* 浮动"+"按钮 = 发布任务 FAB */
 .fab-post {

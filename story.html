@@ -135,6 +135,10 @@
   <script src="data.js"></script>
   <script src="js/state.js"></script>
   <script>
+    // ?task=xxx → 故事页播对应任务的链条（默认主任务 T1）
+    const storyTaskId = new URLSearchParams(location.search).get('task') || 'T1';
+    ChainState.use(storyTaskId);
+
     // 一条爱心链 = 7 个分镜 + 1 张结束卡；所有文案/emoji 复用 TASK_STAGES（DRY）
     function buildSlides() {
       const done = ChainState.getStages();

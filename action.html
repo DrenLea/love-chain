@@ -63,6 +63,27 @@
     }
     let activeRoleId = getInitialRole();
 
+    // ?task=xxx → 操作台绑定到对应任务自己的链条（进度互相独立）
+    const activeTaskId = new URLSearchParams(location.search).get('task') || 'T1';
+    const activeTask = findTaskById(activeTaskId) || findTaskById('T1');
+    ChainState.use(activeTask ? activeTask.id : 'T1');
+    Reviews.use(activeTask ? activeTask.id : 'T1');
+
+    // 保持 URL 参数在切角色/跳转时不丢
+    function keepParams(roleId) {
+      const p = new URLSearchParams(location.search);
+      p.set('role', roleId);
+      p.set('task', ChainState.taskId);
+      return '?' + p.toString();
+    }
+    // 大屏链接也带上任务
+    (function () {
+      const link = document.getElementById('screenLink');
+      const url = new URL(link.getAttribute('href'), location.href);
+      url.searchParams.set('task', ChainState.taskId);
+      link.setAttribute('href', url.pathname.split('/').pop() + url.search);
+    })();
+
     /** 顶部 7 步进度 */
     function renderStageStrip() {
       const stripEl = document.getElementById('stageStrip');
@@ -94,15 +115,17 @@
         `;
         tab.addEventListener('click', () => {
           activeRoleId = role.id;
-          history.replaceState(null, '', `?role=${role.id}`);
+          history.replaceState(null, '', keepParams(role.id));
           render();
         });
         tabsEl.appendChild(tab);
       });
-      // 更新品牌栏
+      // 更新品牌栏：角色 + 当前任务名
       const role = ROLES.find((r) => r.id === activeRoleId);
       document.getElementById('brandTitle').textContent = `${role.emoji} ${role.name}`;
-      document.getElementById('brandSub').textContent = role.hint;
+      document.getElementById('brandSub').textContent = activeTask
+        ? `📌 ${activeTask.title}`
+        : role.hint;
     }
 
     /** 主操作卡片
@@ -114,7 +137,7 @@
       posted: (stage) => ({
         visual: `<div class="stage-visual" style="--stage-color:${stage.color}22">${stage.emoji}</div>`,
         form: `
-          <div class="muted" style="margin-bottom:8px;">物品：3件童装（预填示例）</div>
+          <div class="muted" style="margin-bottom:8px;">物品：${activeTask ? activeTask.title : '3件童装（预填示例）'}</div>
           <textarea id="in_message" rows="2" placeholder="${stage.prompt}">愿这份心意，陪你温暖过冬。</textarea>
         `,
         collect: () => ({ message: document.getElementById('in_message').value }),
@@ -346,7 +369,7 @@
             <div style="font-size:44px;">🏅</div>
             <div class="h-doodle" style="font-size:22px;">爱心链已完整点亮</div>
             <p class="muted" style="margin-top:10px;">全流程 7 步都留下了大家的印记。</p>
-            <a class="btn btn-warm" href="story.html" style="margin-top:10px;">🎬 查看暖心故事 &amp; 海报</a>
+            <a class="btn btn-warm" href="story.html?task=${ChainState.taskId}${document.documentElement.dataset.view === 'web' ? '&view=web' : ''}" style="margin-top:10px;">🎬 查看暖心故事 &amp; 海报</a>
           </div>
         `;
         return;

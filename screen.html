@@ -39,6 +39,16 @@
   <script src="data.js"></script>
   <script src="js/state.js"></script>
   <script>
+    // ?task=xxx → 大屏跟随对应任务的进度（默认主任务 T1）
+    const screenTaskId = new URLSearchParams(location.search).get('task') || 'T1';
+    ChainState.use(screenTaskId);
+    (function () {
+      const t = findTaskById(screenTaskId);
+      if (t && t.id !== 'T1') {
+        document.querySelector('.screen-sub').textContent = `📌 ${t.title} · 大家一起点亮这条爱心链吧`;
+      }
+    })();
+
     // 3x3 九宫格：4 个角落 + 上下左右中间 = 7 步流程；正中心恒定为爱心
     //   [0] posted      [1] matched     [2] reviewed
     //   [3] leg1        [C] ❤          [5] leg2
