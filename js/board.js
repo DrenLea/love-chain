@@ -42,11 +42,14 @@
     renderRolePills() {
       const bar = document.getElementById('rolePillBar');
       if (!bar) return;
+      const view = this.state.scope === 'web' ? '?view=web' : '';
       bar.innerHTML = '';
       ROLES.forEach((role) => {
         const a = document.createElement('a');
         a.className = 'role-pill';
-        a.href = role.id === 'watcher' ? 'screen.html' : `action.html?role=${role.id}`;
+        a.href = role.id === 'watcher'
+          ? `screen.html${view}`
+          : `action.html?role=${role.id}${this.state.scope === 'web' ? '&view=web' : ''}`;
         a.style.setProperty('--pill-color', role.color);
         a.innerHTML = `<span>${role.emoji}</span>${role.name}`;
         bar.appendChild(a);
@@ -137,7 +140,9 @@
       let role = 'donor';
       if (t.type === 'need') role = 'receiver';
       else if (t.type === 'carry') role = 'carrier';
-      location.href = `action.html?role=${role}&task=${t.id}`;
+      // scope=web → 落地页也保持网页版风格
+      const view = this.state.scope === 'web' ? '&view=web' : '';
+      location.href = `action.html?role=${role}&task=${t.id}${view}`;
     },
 
     bindPostSheet() {

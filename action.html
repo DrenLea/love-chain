@@ -5,11 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>角色操作台 · 爱心链</title>
 <link rel="stylesheet" href="css/style.css" />
+<script>
+  // 尽早决定视图模式：?view=web 或 UA 是桌面 → body 加 web-view 类
+  (function () {
+    const params = new URLSearchParams(location.search);
+    const forced = params.get('view');
+    const isMobileUA = /Android|iPhone|iPod|IEMobile|BlackBerry|Opera Mini/i.test(navigator.userAgent || '');
+    const wide = window.matchMedia && window.matchMedia('(min-width: 900px)').matches;
+    let mode = 'app';
+    if (forced === 'web') mode = 'web';
+    else if (forced === 'app') mode = 'app';
+    else if (!isMobileUA && wide) mode = 'web';
+    document.documentElement.dataset.view = mode;
+  })();
+</script>
 </head>
 <body>
   <div class="phone-shell">
     <div class="brand-bar">
-      <a class="back-link" href="app.html">←</a>
+      <a class="back-link" id="backLink" href="app.html">←</a>
       <span id="brandTitle">角色操作台</span>
       <span class="sub" id="brandSub">切换身份推进爱心链</span>
     </div>
@@ -24,13 +38,21 @@
     <div class="card" id="stageCard"></div>
 
     <div style="padding: 6px 18px 24px; text-align: center;">
-      <a class="btn btn-secondary" href="screen.html">🎪 打开拼图大屏看点亮</a>
+      <a class="btn btn-secondary" id="screenLink" href="screen.html">🎪 打开拼图大屏看点亮</a>
     </div>
   </div>
 
   <script src="data.js"></script>
   <script src="js/state.js"></script>
   <script>
+    // ?view=web → 返回 web.html；否则回 app.html
+    (function () {
+      const mode = document.documentElement.dataset.view;
+      if (mode === 'web') {
+        document.getElementById('backLink').setAttribute('href', 'web.html');
+        document.getElementById('screenLink').setAttribute('href', 'screen.html?view=web');
+      }
+    })();
     // 从 URL ?role=xxx 取当前身份，默认第一位 donor
     // 只把"能操作的角色"放进 Tab（watcher 只是围观，不进 action）
     const PLAYABLE_ROLES = ROLES.filter((r) => r.id !== 'watcher');
@@ -136,7 +158,7 @@
         `,
         collect: () => {
           const prev = document.getElementById('preview_leg1');
-          return { photo: prev && prev.style.display === 'block' ? prev.src : null };
+          return { photo: (prev && prev.dataset.persistSrc) || null };
         },
         onMount: () => bindPhoto('in_photo', 'preview_leg1', 'fileLabel_leg1'),
       }),
@@ -152,7 +174,7 @@
         `,
         collect: () => {
           const prev = document.getElementById('preview_leg2');
-          return { photo: prev && prev.style.display === 'block' ? prev.src : null };
+          return { photo: (prev && prev.dataset.persistSrc) || null };
         },
         onMount: () => bindPhoto('in_photo2', 'preview_leg2', 'fileLabel_leg2'),
       }),
@@ -170,7 +192,7 @@
           const prev = document.getElementById('preview_deliver');
           return {
             thanks: document.getElementById('in_thanks').value,
-            photo: prev && prev.style.display === 'block' ? prev.src : null,
+            photo: (prev && prev.dataset.persistSrc) || null,
           };
         },
         onMount: () => bindPhoto('in_deliverPhoto', 'preview_deliver', 'fileLabel_deliver'),
@@ -191,9 +213,35 @@
       input.addEventListener('change', () => {
         const file = input.files[0];
         if (!file) return;
-        preview.src = URL.createObjectURL(file);
-        preview.style.display = 'block';
-        label.style.display = 'none';
+        // 缩到 800px 内 → dataURL，能持久化跨页存到 localStorage
+        fileToCompressedDataURL(file, 800).then((dataUrl) => {
+          preview.src = dataUrl;
+          preview.dataset.persistSrc = dataUrl;
+          preview.style.display = 'block';
+          label.style.display = 'none';
+        });
+      });
+    }
+
+    /** 把图片压到 maxDim 以内的 JPEG dataURL，够小才能塞进 localStorage（~5MB 上限） */
+    function fileToCompressedDataURL(file, maxDim) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const img = new Image();
+          img.onload = () => {
+            const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+            const w = Math.round(img.width * scale);
+            const h = Math.round(img.height * scale);
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/jpeg', 0.78));
+          };
+          img.onerror = () => resolve(reader.result);
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
       });
     }
 

@@ -1420,3 +1420,62 @@ textarea, input[type="text"] {
   cursor: pointer;
   font-size: 14px;
 }
+
+/* ============================================================
+ * data-view="web" → action.html / screen.html / story.html
+ *                   在桌面模式下拉宽 phone-shell、加桌面背景
+ * ============================================================ */
+html[data-view="web"] body {
+  background:
+    radial-gradient(circle at 20% 20%, #ffe5b8 0 20%, transparent 55%),
+    radial-gradient(circle at 80% 80%, #ffd1c4 0 20%, transparent 55%),
+    var(--paper);
+  padding: 30px 20px;
+  min-height: 100vh;
+}
+html[data-view="web"] .phone-shell {
+  max-width: 760px;
+  border: 3px solid var(--line);
+  border-radius: 22px;
+  box-shadow: var(--shadow-doodle);
+  background: #fff;
+  overflow: hidden;
+  border-left: 3px solid var(--line);
+  border-right: 3px solid var(--line);
+}
+html[data-view="web"] .phone-shell .brand-bar {
+  font-size: 24px;
+  padding: 26px 26px 22px;
+}
+html[data-view="web"] .stage-strip {
+  padding: 14px 22px 8px;
+}
+html[data-view="web"] .stage-strip .step { min-width: 62px; font-size: 12px; }
+html[data-view="web"] .stage-strip .step .dot { width: 28px; height: 28px; line-height: 24px; }
+html[data-view="web"] .role-tabs { padding: 10px 22px 0; gap: 8px; }
+html[data-view="web"] .role-tab { min-width: 100px; padding: 12px 8px; font-size: 13px; }
+html[data-view="web"] .role-tab .avatar { font-size: 26px; }
+html[data-view="web"] .card {
+  margin: 18px 22px;
+  padding: 20px 26px;
+}
+html[data-view="web"] .h-doodle { font-size: 22px; }
+html[data-view="web"] .stage-visual { height: 180px; font-size: 68px; }
+html[data-view="web"] .scan-line-wrap { height: 180px; }
+html[data-view="web"] .scan-line-wrap .frame { font-size: 64px; }
+html[data-view="web"] .photo-preview { height: 260px; }
+html[data-view="web"] textarea, html[data-view="web"] input[type="text"] {
+  font-size: 15px; padding: 14px 16px;
+}
+html[data-view="web"] .reviewer-grid {
+  grid-template-columns: repeat(10, 1fr);
+  gap: 6px 8px;
+}
+html[data-view="web"] .review-feed { max-height: 200px; }
+html[data-view="web"] .fab-post { display: none; }
+html[data-view="web"] .puzzle-grid {
+  grid-template-columns: repeat(3, 140px);
+  grid-template-rows: repeat(3, 140px);
+}
+html[data-view="web"] .puzzle-cell { font-size: 44px; }
+html[data-view="web"] .puzzle-cell .step-label { font-size: 12px; }

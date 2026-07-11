@@ -5,6 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>拼图大屏 · 爱心链</title>
 <link rel="stylesheet" href="css/style.css" />
+<script>
+  (function () {
+    const params = new URLSearchParams(location.search);
+    const forced = params.get('view');
+    const isMobileUA = /Android|iPhone|iPod|IEMobile|BlackBerry|Opera Mini/i.test(navigator.userAgent || '');
+    const wide = window.matchMedia && window.matchMedia('(min-width: 900px)').matches;
+    let mode = 'app';
+    if (forced === 'web') mode = 'web';
+    else if (forced === 'app') mode = 'app';
+    else if (!isMobileUA && wide) mode = 'web';
+    document.documentElement.dataset.view = mode;
+  })();
+</script>
 </head>
 <body>
   <div class="screen-wrap">
